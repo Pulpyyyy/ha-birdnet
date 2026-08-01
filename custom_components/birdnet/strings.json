@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET",
+        "description": "Enter the MQTT topic BirdNET-Pi (Apprise) or BirdNET-Go publishes detections to.",
+        "data": {
+          "topic": "MQTT topic",
+          "min_confidence": "Minimum confidence",
+          "excluded_species": "Ignored species"
+        },
+        "data_description": {
+          "topic": "For example birdnet/detection",
+          "min_confidence": "Detections below this threshold are discarded.",
+          "excluded_species": "Common or scientific name, one per entry (e.g. Human, Noise)."
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Invalid MQTT topic."
+    },
+    "abort": {
+      "already_configured": "This topic is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BirdNET options",
+        "data": {
+          "topic": "MQTT topic",
+          "min_confidence": "Minimum confidence",
+          "excluded_species": "Ignored species",
+          "max_detections": "Detections kept per day"
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Invalid MQTT topic."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Last detection" },
+      "confidence": { "name": "Confidence" },
+      "last_detection_time": { "name": "Detection time" },
+      "detections_today": { "name": "Detections today" },
+      "species_today": { "name": "Species today" },
+      "mqtt_topic": { "name": "MQTT topic" }
+    },
+    "image": {
+      "last_detection": { "name": "Last detection" }
+    },
+    "event": {
+      "detection": {
+        "name": "Detection",
+        "state_attributes": {
+          "event_type": {
+            "state": { "detection": "Detection" }
+          }
+        }
+      }
+    }
+  },
+  "services": {
+    "clear_log": {
+      "name": "Clear today's log",
+      "description": "Removes detections accumulated since midnight.",
+      "fields": {
+        "entry_id": {
+          "name": "Instance",
+          "description": "BirdNET instance to target (all by default)."
+        }
+      }
+    },
+    "simulate_detection": {
+      "name": "Simulate a detection",
+      "description": "Injects a fake detection, useful to test the card.",
+      "fields": {
+        "common_name": { "name": "Common name", "description": "E.g. Eurasian Magpie" },
+        "scientific_name": { "name": "Scientific name", "description": "E.g. Pica pica" },
+        "confidence": { "name": "Confidence", "description": "Between 0 and 1." },
+        "image": { "name": "Image", "description": "Picture URL." },
+        "link": { "name": "Link", "description": "BirdNET listen URL." },
+        "entry_id": { "name": "Instance", "description": "BirdNET instance to target." }
+      }
+    }
+  }
+}

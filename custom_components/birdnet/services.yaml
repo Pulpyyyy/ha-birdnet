@@ -1,0 +1,42 @@
+clear_log:
+  fields:
+    entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: birdnet
+
+simulate_detection:
+  fields:
+    common_name:
+      required: true
+      example: Pie bavarde
+      selector:
+        text:
+    scientific_name:
+      required: false
+      example: Pica pica
+      selector:
+        text:
+    confidence:
+      required: false
+      default: 0.95
+      selector:
+        number:
+          min: 0
+          max: 1
+          step: 0.01
+          mode: slider
+    image:
+      required: false
+      selector:
+        text:
+    link:
+      required: false
+      selector:
+        text:
+    entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: birdnet

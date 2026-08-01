@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET",
+        "description": "Indiquez le topic MQTT sur lequel BirdNET-Pi (Apprise) ou BirdNET-Go publie ses détections.",
+        "data": {
+          "topic": "Topic MQTT",
+          "min_confidence": "Confiance minimale",
+          "excluded_species": "Espèces ignorées"
+        },
+        "data_description": {
+          "topic": "Par exemple birdnet/detection",
+          "min_confidence": "Les détections en dessous de ce seuil sont ignorées.",
+          "excluded_species": "Nom commun ou scientifique, un par entrée (ex. Humain, Bruit)."
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Topic MQTT invalide."
+    },
+    "abort": {
+      "already_configured": "Ce topic est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options BirdNET",
+        "data": {
+          "topic": "Topic MQTT",
+          "min_confidence": "Confiance minimale",
+          "excluded_species": "Espèces ignorées",
+          "max_detections": "Détections conservées par jour"
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Topic MQTT invalide."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Dernière détection" },
+      "confidence": { "name": "Confiance" },
+      "last_detection_time": { "name": "Heure de détection" },
+      "detections_today": { "name": "Détections du jour" },
+      "species_today": { "name": "Espèces du jour" },
+      "mqtt_topic": { "name": "Topic MQTT" }
+    },
+    "image": {
+      "last_detection": { "name": "Dernière détection" }
+    },
+    "event": {
+      "detection": {
+        "name": "Détection",
+        "state_attributes": {
+          "event_type": {
+            "state": { "detection": "Détection" }
+          }
+        }
+      }
+    }
+  },
+  "services": {
+    "clear_log": {
+      "name": "Vider le journal du jour",
+      "description": "Supprime les détections accumulées depuis minuit.",
+      "fields": {
+        "entry_id": {
+          "name": "Instance",
+          "description": "Instance BirdNET concernée (toutes par défaut)."
+        }
+      }
+    },
+    "simulate_detection": {
+      "name": "Simuler une détection",
+      "description": "Injecte une détection factice, utile pour tester la carte.",
+      "fields": {
+        "common_name": { "name": "Nom commun", "description": "Ex. Pie bavarde" },
+        "scientific_name": { "name": "Nom scientifique", "description": "Ex. Pica pica" },
+        "confidence": { "name": "Confiance", "description": "Entre 0 et 1." },
+        "image": { "name": "Image", "description": "URL de la photo." },
+        "link": { "name": "Lien", "description": "URL d'écoute BirdNET." },
+        "entry_id": { "name": "Instance", "description": "Instance BirdNET concernée." }
+      }
+    }
+  }
+}
