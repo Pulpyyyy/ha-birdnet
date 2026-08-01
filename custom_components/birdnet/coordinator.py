@@ -271,9 +271,16 @@ class BirdNetCoordinator:
                 entry["max_confidence"] is None or confidence > entry["max_confidence"]
             ):
                 entry["max_confidence"] = confidence
+            # Un message sans nom latin ne doit pas priver l'espèce du sien pour
+            # le reste de la journée.
+            if detection.scientific_name and not entry["scientific_name"]:
+                entry["scientific_name"] = detection.scientific_name
             if detection.detected_at.isoformat() >= entry["last_timestamp"]:
                 entry["last_time"] = detection.detected_at.strftime("%H:%M:%S")
                 entry["last_timestamp"] = detection.detected_at.isoformat()
+                entry["scientific_name"] = (
+                    detection.scientific_name or entry["scientific_name"]
+                )
                 entry["image"] = detection.image_url or entry["image"]
                 entry["link"] = detection.link or entry["link"]
         return sorted(
