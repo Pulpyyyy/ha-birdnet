@@ -18,6 +18,10 @@ const STRINGS = {
     entityMissing: "Entité introuvable",
     listen: "Écouter l'enregistrement",
     pause: "Pause",
+    reload: "Recharger",
+    versionMismatch: (backend, card) =>
+      `BirdNET : la carte chargée (${card}) ne correspond pas à l'intégration ` +
+      `(${backend}). Rechargez pour vider le cache.`,
     times: (n) => `${n} détection${n > 1 ? "s" : ""} aujourd'hui`,
     confidence: "fiabilité",
   },
@@ -30,6 +34,10 @@ const STRINGS = {
     entityMissing: "Entity not found",
     listen: "Play recording",
     pause: "Pause",
+    reload: "Reload",
+    versionMismatch: (backend, card) =>
+      `BirdNET: the loaded card (${card}) does not match the integration ` +
+      `(${backend}). Reload to clear the cache.`,
     times: (n) => `${n} detection${n > 1 ? "s" : ""} today`,
     confidence: "confidence",
   },
@@ -114,6 +122,7 @@ class BirdNetCard extends HTMLElement {
     this._signature = null;
     this._audio = null;
     this._playingUrl = null;
+    this._versionChecked = false;
   }
 
   setConfig(config) {
@@ -127,11 +136,65 @@ class BirdNetCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    this._checkVersion();
     if (this._config) this._render();
   }
 
   disconnectedCallback() {
     this._stopAudio();
+  }
+
+  /**
+   * Une URL versionnée ne suffit pas : une page déjà en cache (typiquement
+   * l'application mobile) continue de charger l'ancien module. On compare donc
+   * la version de la carte à celle que l'intégration annonce.
+   */
+  async _checkVersion() {
+    if (this._versionChecked || !this._hass?.connection) return;
+    this._versionChecked = true;
+    try {
+      const result = await this._hass.connection.sendMessagePromise({
+        type: "birdnet/version",
+      });
+      if (result?.version && result.version !== CARD_VERSION) {
+        this._notifyVersionMismatch(result.version);
+      }
+    } catch (err) {
+      // Intégration absente : la carte sait aussi lire un template sensor,
+      // il n'y a alors aucune version à comparer.
+    }
+  }
+
+  _notifyVersionMismatch(backendVersion) {
+    const t = this._t;
+    console.warn(
+      `[birdnet-card] version ${CARD_VERSION}, intégration ${backendVersion}`
+    );
+    this.dispatchEvent(
+      new CustomEvent("hass-notification", {
+        detail: {
+          message: t.versionMismatch(backendVersion, CARD_VERSION),
+          duration: -1,
+          dismissable: true,
+          action: { text: t.reload, action: () => this._reloadWithoutCache() },
+        },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  _reloadWithoutCache() {
+    // L'API caches demande HTTPS ou localhost : repli sur un rechargement sec.
+    if (!("caches" in window)) {
+      window.location.reload();
+      return;
+    }
+    caches
+      .keys()
+      .then((names) => Promise.all(names.map((name) => caches.delete(name))))
+      .catch(() => undefined)
+      .then(() => window.location.reload());
   }
 
   getCardSize() {

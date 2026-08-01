@@ -3,7 +3,7 @@
   "name": "BirdNET",
   "codeowners": ["@Pulpyyyy"],
   "config_flow": true,
-  "dependencies": ["mqtt", "http"],
+  "dependencies": ["frontend", "http", "mqtt"],
   "after_dependencies": ["lovelace"],
   "documentation": "https://github.com/Pulpyyyy/ha-birdnet",
   "integration_type": "service",

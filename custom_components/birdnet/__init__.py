@@ -4,19 +4,22 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components import mqtt
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.components import mqtt, websocket_api
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
+from homeassistant.core import CoreState, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ConfigEntryNotReady, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 import voluptuous as vol
 
-from .const import DOMAIN
+from .const import DOMAIN, INTEGRATION_VERSION
 from .coordinator import BirdNetConfigEntry, BirdNetCoordinator
-from .frontend import async_register_frontend
+from .frontend import JSModuleRegistration
 from .models import Detection
 
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [Platform.EVENT, Platform.IMAGE, Platform.SENSOR]
 
@@ -35,6 +38,39 @@ _SIMULATE_SCHEMA = _ENTRY_ID_SCHEMA.extend(
 )
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/version"})
+@callback
+def websocket_get_version(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Renvoie la version de l'intégration à la carte.
+
+    L'URL versionnée ne suffit pas : une page en cache (surtout dans
+    l'application mobile) continue de charger l'ancien module. La carte compare
+    les deux versions et propose un rechargement si elles divergent.
+    """
+    connection.send_result(msg["id"], {"version": INTEGRATION_VERSION})
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Enregistre la carte une seule fois, quel que soit le nombre d'entrées."""
+    websocket_api.async_register_command(hass, websocket_get_version)
+
+    async def _setup_frontend(_event=None) -> None:
+        await JSModuleRegistration(hass).async_register()
+
+    # Avant EVENT_HOMEASSISTANT_STARTED, hass.data["lovelace"] n'existe pas
+    # encore : l'enregistrement de la ressource serait silencieusement ignoré.
+    if hass.state is CoreState.running:
+        await _setup_frontend()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_frontend)
+
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> bool:
     """Configure une instance BirdNET."""
     if not await mqtt.async_wait_for_mqtt_client(hass):
@@ -44,7 +80,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> b
     await coordinator.async_setup()
     entry.runtime_data = coordinator
 
-    await async_register_frontend(hass)
     _async_register_services(hass)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -58,6 +93,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> 
     if unload_ok:
         await entry.runtime_data.async_shutdown()
     return unload_ok
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> None:
+    """Retire la ressource Lovelace quand la dernière entrée disparaît."""
+    if hass.config_entries.async_entries(DOMAIN):
+        return
+    await JSModuleRegistration(hass).async_unregister()
 
 
 async def _async_reload_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> None:
@@ -84,8 +126,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
 
     async def _handle_clear_log(call: ServiceCall) -> None:
         for coordinator in _coordinators(call):
-            coordinator.detections = []
-            coordinator._notify()  # noqa: SLF001 - notification interne volontaire
+            coordinator.async_clear_log()
 
     async def _handle_simulate(call: ServiceCall) -> None:
         payload = {

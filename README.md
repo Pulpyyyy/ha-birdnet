@@ -206,3 +206,8 @@ actions:
 
 Format du payload et logique du tableau inspirés du
 [tuto BirdNET de la communauté HACF](https://forum.hacf.fr/t/birdnet-tuto-comment-reperer-et-ecouter-les-oiseaux-du-jardin/66856).
+
+Mécanisme d'embarquement de la carte dans l'intégration (chemin statique,
+ressource Lovelace, contrôle de version anti-cache) repris du
+[guide développeur de KipK](https://forum.hacf.fr/t/guide-developpeur-carte-lovelace-embarquee-dans-une-integration-home-assistant/74074),
+tiré de l'intégration [marees_france](https://github.com/KipK/marees_france).

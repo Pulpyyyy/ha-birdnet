@@ -234,6 +234,11 @@ class BirdNetCoordinator:
     @callback
     def _handle_midnight(self, _now: Any) -> None:
         """Vide le journal quotidien à minuit."""
+        self.async_clear_log()
+
+    @callback
+    def async_clear_log(self) -> None:
+        """Vide le journal du jour sans toucher à la dernière détection."""
         self.detections = []
         self._store.async_delay_save(self._data_to_save, 5)
         self._notify()
