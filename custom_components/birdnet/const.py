@@ -35,10 +35,8 @@ URL_BASE: Final = "/birdnet_frontend"
 CARD_FILENAME: Final = "birdnet-card.js"
 
 # Modules JS livrés avec l'intégration et publiés dans les ressources Lovelace.
+# L'URL enregistrée est nue : le suivi de version passe par la commande
+# websocket birdnet/version, pas par un paramètre ?v=.
 JSMODULES: Final[list[dict[str, str]]] = [
-    {
-        "name": "BirdNET Card",
-        "filename": CARD_FILENAME,
-        "version": INTEGRATION_VERSION,
-    },
+    {"name": "BirdNET Card", "filename": CARD_FILENAME},
 ]

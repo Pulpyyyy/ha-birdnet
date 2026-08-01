@@ -88,7 +88,11 @@ class JSModuleRegistration:
         await _check_loaded(0)
 
     async def _async_register_modules(self) -> None:
-        """Crée ou met à jour la ressource, version comprise."""
+        """Crée la ressource si elle manque, sans paramètre de version.
+
+        Un `?v=` dans l'URL ne règle de toute façon pas le cache de l'app
+        mobile : c'est la commande websocket `birdnet/version` qui s'en charge.
+        """
         existing = [
             resource
             for resource in self.lovelace.resources.async_items()
@@ -97,30 +101,24 @@ class JSModuleRegistration:
 
         for module in JSMODULES:
             url = f"{URL_BASE}/{module['filename']}"
-            versioned = f"{url}?v={module['version']}"
             registered = False
 
             for resource in existing:
                 if self._get_path(resource["url"]) != url:
                     continue
                 registered = True
-                if self._get_version(resource["url"]) != module["version"]:
-                    _LOGGER.info(
-                        "Mise à jour de %s vers la version %s",
-                        module["name"],
-                        module["version"],
-                    )
+                if resource["url"] != url:
+                    # Nettoie un ?v= hérité d'une version précédente.
+                    _LOGGER.info("Ressource %s : suppression du suffixe de version", url)
                     await self.lovelace.resources.async_update_item(
-                        resource["id"], {"res_type": "module", "url": versioned}
+                        resource["id"], {"res_type": "module", "url": url}
                     )
                 break
 
             if not registered:
-                _LOGGER.info(
-                    "Enregistrement de %s version %s", module["name"], module["version"]
-                )
+                _LOGGER.info("Enregistrement de %s (%s)", module["name"], url)
                 await self.lovelace.resources.async_create_item(
-                    {"res_type": "module", "url": versioned}
+                    {"res_type": "module", "url": url}
                 )
 
     async def async_unregister(self) -> None:
@@ -140,11 +138,3 @@ class JSModuleRegistration:
     def _get_path(url: str) -> str:
         """Chemin sans les paramètres de requête."""
         return url.split("?")[0]
-
-    @staticmethod
-    def _get_version(url: str) -> str:
-        """Version portée par l'URL, ou « 0 » si absente."""
-        parts = url.split("?")
-        if len(parts) > 1 and parts[1].startswith("v="):
-            return parts[1].replace("v=", "")
-        return "0"
