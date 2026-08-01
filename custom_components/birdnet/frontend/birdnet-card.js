@@ -561,8 +561,14 @@ class BirdNetCard extends HTMLElement {
       :host {
         --birdnet-gap: 16px;
         --birdnet-radius: 12px;
-        --birdnet-high: var(--success-color, #2e7d32);
-        --birdnet-mid: var(--primary-color, #03a9f4);
+        /* Échelle de fiabilité sur une seule teinte, celle du thème : primaire
+           franche, primaire atténuée, puis gris. */
+        --birdnet-high: var(--primary-color, #03a9f4);
+        --birdnet-mid: color-mix(
+          in srgb,
+          var(--primary-color, #03a9f4) 55%,
+          var(--secondary-text-color, #727272)
+        );
         --birdnet-low: var(--secondary-text-color, #727272);
       }
       ha-card {

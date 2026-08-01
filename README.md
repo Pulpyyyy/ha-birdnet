@@ -141,7 +141,9 @@ tap_action: url               # url | more-info | none
   information perdue.
 * **Fiabilité lisible d'un coup d'œil.** Pastille colorée sur une échelle de
   confiance (≥ 90 %, ≥ 75 %, en dessous) et micro-jauge sous chaque ligne du
-  journal — pas un code d'alerte, une échelle.
+  journal. Une seule teinte, celle du thème : couleur primaire franche, primaire
+  atténuée, puis gris — pas un code d'alerte, une échelle, et la carte suit
+  automatiquement tes couleurs.
 * **Journal dense.** Une ligne par espèce : heure, nom cliquable, nombre de
   détections, meilleure fiabilité. Chiffres en chasse fixe pour un alignement
   net. Les totaux du jour sont dans l'en-tête de section, pas sur une ligne
