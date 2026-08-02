@@ -52,6 +52,9 @@ lovelace:
       type: module
 ```
 
+Already running a trigger-based template sensor from a community tutorial? See
+[MIGRATION.md](MIGRATION.md).
+
 ## Configuration
 
 When adding the integration:
@@ -178,26 +181,6 @@ entity: sensor.birdnet_go_events
 So it works before you switch to the integration. Conversely,
 `sensor.birdnet_last_detection` exposes a `bird_events` attribute in the same
 shape, so an existing markdown card keeps working.
-
-## Coming from a trigger-based template sensor
-
-If you followed one of the community tutorials, you already have a `template:`
-block with an `mqtt` trigger, and possibly a few `mqtt: sensor:` entries. The
-integration replaces all of it — same topic, same fields — and adds a persisted
-log, a configurable threshold and a proper automation entity.
-
-1. Point the card at `sensor.birdnet_last_detection` and check that it fills up.
-2. Delete the `template:` block and the BirdNET `mqtt: sensor:` entries.
-3. Reload templates, or restart.
-
-Both can run side by side while you migrate: MQTT is publish/subscribe, so the
-integration and your template sensor each receive their own copy of every
-message, without interfering.
-
-Two things to know. Entity ids change, so any automation pointing at the old
-sensor has to be updated — `event.birdnet_detection` is the entity meant for
-that, see [Automation](#automation). And the history of the old sensor stays in
-the recorder, it is not carried over.
 
 ## Languages
 
