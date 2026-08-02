@@ -1,7 +1,7 @@
 /*!
- * BirdNET Card — carte Lovelace pour l'intégration BirdNET (MQTT).
- * Fonctionne avec sensor.birdnet_derniere_detection (intégration) ou avec un
- * template sensor exposant common_name / image / bird_events (tuto HACF).
+ * BirdNET Card — Lovelace card for the BirdNET integration (MQTT).
+ * Works with sensor.birdnet_last_detection (shipped by the integration) or with
+ * any template sensor exposing common_name / image / bird_events.
  */
 
 const CARD_VERSION = "1.0.0";
@@ -9,28 +9,14 @@ const CARD_VERSION = "1.0.0";
 console.info(`%c 🙂 BirdNET Card %c v${CARD_VERSION} %c`, "background:#2196F3;color:white;padding:2px 8px;border-radius:3px 0 0 3px;font-weight:bold", "background:#4CAF50;color:white;padding:2px 8px;border-radius:0 3px 3px 0", "background:none");
 
 const STRINGS = {
-  fr: {
-    noDetection: "Aucune détection",
-    waiting: "En attente d'une détection…",
-    today: "Aujourd'hui",
-    species: (n) => `${n} espèce${n > 1 ? "s" : ""}`,
-    detections: (n) => `${n} détection${n > 1 ? "s" : ""}`,
-    entityMissing: "Entité introuvable",
-    listen: "Écouter l'enregistrement",
-    pause: "Pause",
-    reload: "Recharger",
-    versionMismatch: (backend, card) =>
-      `BirdNET : la carte chargée (${card}) ne correspond pas à l'intégration ` +
-      `(${backend}). Rechargez pour vider le cache.`,
-    times: (n) => `${n} détection${n > 1 ? "s" : ""} aujourd'hui`,
-    confidence: "fiabilité",
-  },
   en: {
     noDetection: "No detection",
     waiting: "Waiting for a detection…",
     today: "Today",
     species: (n) => `${n} species`,
     detections: (n) => `${n} detection${n > 1 ? "s" : ""}`,
+    times: (n) => `${n} detection${n > 1 ? "s" : ""} today`,
+    confidenceTitle: (p) => `${p}% confidence`,
     entityMissing: "Entity not found",
     listen: "Play recording",
     pause: "Pause",
@@ -38,16 +24,223 @@ const STRINGS = {
     versionMismatch: (backend, card) =>
       `BirdNET: the loaded card (${card}) does not match the integration ` +
       `(${backend}). Reload to clear the cache.`,
-    times: (n) => `${n} detection${n > 1 ? "s" : ""} today`,
-    confidence: "confidence",
+    labels: {
+      entity: "BirdNET entity",
+      title: "Title (optional)",
+      layout: "Layout",
+      show_image: "Picture",
+      show_chips: "Scientific name + confidence",
+      show_log: "Today's log",
+      show_audio: "Recording playback",
+      show_footer: "Daily totals",
+      wikipedia: "Wikipedia links",
+      wikipedia_language: "Wikipedia language",
+      max_rows: "Rows shown",
+      log_min_confidence: "Log threshold (%)",
+      aspect_ratio: "Picture aspect ratio",
+      emphasis: "Highlight in the log",
+      tap_action: "Tap action",
+    },
+    options: {
+      hero: "Large picture",
+      compact: "Compact thumbnail",
+      confidence: "Confidence (%)",
+      count: "Number of detections",
+      url: "Open the BirdNET link",
+      wikipedia: "Open the Wikipedia page",
+      moreInfo: "Entity details",
+      none: "None",
+    },
   },
+
+  fr: {
+    noDetection: "Aucune détection",
+    waiting: "En attente d'une détection…",
+    today: "Aujourd'hui",
+    species: (n) => `${n} espèce${n > 1 ? "s" : ""}`,
+    detections: (n) => `${n} détection${n > 1 ? "s" : ""}`,
+    times: (n) => `${n} détection${n > 1 ? "s" : ""} aujourd'hui`,
+    confidenceTitle: (p) => `${p} % de fiabilité`,
+    entityMissing: "Entité introuvable",
+    listen: "Écouter l'enregistrement",
+    pause: "Pause",
+    reload: "Recharger",
+    versionMismatch: (backend, card) =>
+      `BirdNET : la carte chargée (${card}) ne correspond pas à l'intégration ` +
+      `(${backend}). Rechargez pour vider le cache.`,
+    labels: {
+      entity: "Entité BirdNET",
+      title: "Titre (optionnel)",
+      layout: "Mise en page",
+      show_image: "Photo",
+      show_chips: "Nom latin + fiabilité",
+      show_log: "Journal du jour",
+      show_audio: "Lecture de l'enregistrement",
+      show_footer: "Totaux du jour",
+      wikipedia: "Liens Wikipédia",
+      wikipedia_language: "Langue Wikipédia",
+      max_rows: "Lignes affichées",
+      log_min_confidence: "Seuil du journal (%)",
+      aspect_ratio: "Format de la photo",
+      emphasis: "Mettre en valeur dans le journal",
+      tap_action: "Action au clic",
+    },
+    options: {
+      hero: "Grande photo",
+      compact: "Vignette compacte",
+      confidence: "La fiabilité (%)",
+      count: "Le nombre de détections",
+      url: "Ouvrir le lien BirdNET",
+      wikipedia: "Ouvrir la fiche Wikipédia",
+      moreInfo: "Fiche de l'entité",
+      none: "Aucune",
+    },
+  },
+
+  de: {
+    noDetection: "Keine Erkennung",
+    waiting: "Warte auf eine Erkennung…",
+    today: "Heute",
+    species: (n) => `${n} Art${n > 1 ? "en" : ""}`,
+    detections: (n) => `${n} Erkennung${n > 1 ? "en" : ""}`,
+    times: (n) => `${n} Erkennung${n > 1 ? "en" : ""} heute`,
+    confidenceTitle: (p) => `${p} % Zuverlässigkeit`,
+    entityMissing: "Entität nicht gefunden",
+    listen: "Aufnahme abspielen",
+    pause: "Pause",
+    reload: "Neu laden",
+    versionMismatch: (backend, card) =>
+      `BirdNET: Die geladene Karte (${card}) passt nicht zur Integration ` +
+      `(${backend}). Zum Leeren des Caches neu laden.`,
+    labels: {
+      entity: "BirdNET-Entität",
+      title: "Titel (optional)",
+      layout: "Layout",
+      show_image: "Bild",
+      show_chips: "Wissenschaftlicher Name + Zuverlässigkeit",
+      show_log: "Protokoll des Tages",
+      show_audio: "Aufnahme abspielen",
+      show_footer: "Tagessummen",
+      wikipedia: "Wikipedia-Links",
+      wikipedia_language: "Wikipedia-Sprache",
+      max_rows: "Angezeigte Zeilen",
+      log_min_confidence: "Schwelle für das Protokoll (%)",
+      aspect_ratio: "Seitenverhältnis des Bildes",
+      emphasis: "Im Protokoll hervorheben",
+      tap_action: "Aktion beim Tippen",
+    },
+    options: {
+      hero: "Großes Bild",
+      compact: "Kompaktes Vorschaubild",
+      confidence: "Zuverlässigkeit (%)",
+      count: "Anzahl der Erkennungen",
+      url: "BirdNET-Link öffnen",
+      wikipedia: "Wikipedia-Seite öffnen",
+      moreInfo: "Entitätsdetails",
+      none: "Keine",
+    },
+  },
+
+  es: {
+    noDetection: "Sin detección",
+    waiting: "Esperando una detección…",
+    today: "Hoy",
+    species: (n) => `${n} especie${n > 1 ? "s" : ""}`,
+    detections: (n) => `${n} ${n > 1 ? "detecciones" : "detección"}`,
+    times: (n) => `${n} ${n > 1 ? "detecciones" : "detección"} hoy`,
+    confidenceTitle: (p) => `${p} % de fiabilidad`,
+    entityMissing: "Entidad no encontrada",
+    listen: "Reproducir la grabación",
+    pause: "Pausa",
+    reload: "Recargar",
+    versionMismatch: (backend, card) =>
+      `BirdNET: la tarjeta cargada (${card}) no coincide con la integración ` +
+      `(${backend}). Recarga para vaciar la caché.`,
+    labels: {
+      entity: "Entidad BirdNET",
+      title: "Título (opcional)",
+      layout: "Diseño",
+      show_image: "Foto",
+      show_chips: "Nombre científico + fiabilidad",
+      show_log: "Registro del día",
+      show_audio: "Reproducción de la grabación",
+      show_footer: "Totales del día",
+      wikipedia: "Enlaces de Wikipedia",
+      wikipedia_language: "Idioma de Wikipedia",
+      max_rows: "Filas mostradas",
+      log_min_confidence: "Umbral del registro (%)",
+      aspect_ratio: "Formato de la foto",
+      emphasis: "Destacar en el registro",
+      tap_action: "Acción al pulsar",
+    },
+    options: {
+      hero: "Foto grande",
+      compact: "Miniatura compacta",
+      confidence: "La fiabilidad (%)",
+      count: "El número de detecciones",
+      url: "Abrir el enlace de BirdNET",
+      wikipedia: "Abrir la página de Wikipedia",
+      moreInfo: "Detalles de la entidad",
+      none: "Ninguna",
+    },
+  },
+
+  it: {
+    noDetection: "Nessun rilevamento",
+    waiting: "In attesa di un rilevamento…",
+    today: "Oggi",
+    species: (n) => `${n} specie`,
+    detections: (n) => `${n} rilevament${n > 1 ? "i" : "o"}`,
+    times: (n) => `${n} rilevament${n > 1 ? "i" : "o"} oggi`,
+    confidenceTitle: (p) => `${p} % di affidabilità`,
+    entityMissing: "Entità non trovata",
+    listen: "Riproduci la registrazione",
+    pause: "Pausa",
+    reload: "Ricarica",
+    versionMismatch: (backend, card) =>
+      `BirdNET: la scheda caricata (${card}) non corrisponde all'integrazione ` +
+      `(${backend}). Ricarica per svuotare la cache.`,
+    labels: {
+      entity: "Entità BirdNET",
+      title: "Titolo (opzionale)",
+      layout: "Disposizione",
+      show_image: "Foto",
+      show_chips: "Nome scientifico + affidabilità",
+      show_log: "Registro del giorno",
+      show_audio: "Riproduzione della registrazione",
+      show_footer: "Totali del giorno",
+      wikipedia: "Collegamenti a Wikipedia",
+      wikipedia_language: "Lingua di Wikipedia",
+      max_rows: "Righe mostrate",
+      log_min_confidence: "Soglia del registro (%)",
+      aspect_ratio: "Formato della foto",
+      emphasis: "Evidenzia nel registro",
+      tap_action: "Azione al tocco",
+    },
+    options: {
+      hero: "Foto grande",
+      compact: "Miniatura compatta",
+      confidence: "L'affidabilità (%)",
+      count: "Il numero di rilevamenti",
+      url: "Apri il collegamento BirdNET",
+      wikipedia: "Apri la pagina di Wikipedia",
+      moreInfo: "Dettagli dell'entità",
+      none: "Nessuna",
+    },
+  },
+};
+
+/** Pick the translation table matching the user's Home Assistant language. */
+const localize = (hass) => {
+  const language = (hass?.locale?.language || "en").slice(0, 2);
+  return STRINGS[language] || STRINGS.en;
 };
 
 const DEFAULTS = {
   title: "",
   layout: "hero", // hero | compact
   show_image: true,
-  show_chips: true, // nom scientifique + pastille de confiance
+  show_chips: true, // scientific name + confidence pill
   show_log: true,
   show_audio: true,
   show_footer: true,
@@ -57,7 +250,7 @@ const DEFAULTS = {
   emphasis: "confidence", // confidence | count
   wikipedia: true,
   wikipedia_language: "",
-  tap_action: "url",
+  tap_action: "url", // url | wikipedia | more-info | none
 };
 
 const esc = (value) =>
@@ -67,7 +260,7 @@ const esc = (value) =>
     .split(">").join("&gt;")
     .split('"').join("&quot;");
 
-/** URL sûre : uniquement http(s) et chemins internes. */
+/** Only accept http(s) and internal paths. */
 const safeUrl = (value) => {
   if (typeof value !== "string") return "";
   const url = value.trim();
@@ -77,7 +270,7 @@ const safeUrl = (value) => {
   return "";
 };
 
-/** Confiance normalisée en pourcentage (accepte 0.98, 98, "98%"). */
+/** Normalise a confidence to a percentage (accepts 0.98, 98, "98%"). */
 const toPercent = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const number = parseFloat(String(value).split("%").join("").split(",").join("."));
@@ -85,7 +278,7 @@ const toPercent = (value) => {
   return number <= 1 ? Math.round(number * 100) : Math.round(number);
 };
 
-/** Niveau qualitatif, sert au code couleur (pas d'alarme : une échelle). */
+/** Qualitative level driving the colour. A scale, not an alert code. */
 const confidenceLevel = (percent) => {
   if (percent === null) return "none";
   if (percent >= 90) return "high";
@@ -128,7 +321,7 @@ class BirdNetCard extends HTMLElement {
 
   setConfig(config) {
     if (!config || !config.entity) {
-      throw new Error("Renseignez une entité (entity).");
+      throw new Error("An entity is required.");
     }
     this._config = { ...DEFAULTS, ...config };
     this._signature = null;
@@ -145,10 +338,23 @@ class BirdNetCard extends HTMLElement {
     this._stopAudio();
   }
 
+  getCardSize() {
+    const config = this._config || DEFAULTS;
+    const media = config.show_image ? (config.layout === "compact" ? 1 : 3) : 1;
+    const rows = config.show_log ? Math.ceil((Number(config.max_rows) || 10) / 2) : 0;
+    return media + 1 + rows;
+  }
+
+  get _t() {
+    return localize(this._hass);
+  }
+
+  // ------------------------------------------------------------ version check
+
   /**
-   * Une URL versionnée ne suffit pas : une page déjà en cache (typiquement
-   * l'application mobile) continue de charger l'ancien module. On compare donc
-   * la version de la carte à celle que l'intégration annonce.
+   * A versioned URL is not enough: an already cached page (typically the
+   * companion app) keeps loading the old module. So we compare the card version
+   * with the one the integration reports.
    */
   async _checkVersion() {
     if (this._versionChecked || !this._hass?.connection) return;
@@ -161,15 +367,15 @@ class BirdNetCard extends HTMLElement {
         this._notifyVersionMismatch(result.version);
       }
     } catch (err) {
-      // Intégration absente : la carte sait aussi lire un template sensor,
-      // il n'y a alors aucune version à comparer.
+      // Integration not installed: the card also reads plain template sensors,
+      // in which case there is no version to compare.
     }
   }
 
   _notifyVersionMismatch(backendVersion) {
     const t = this._t;
     console.warn(
-      `[birdnet-card] version ${CARD_VERSION}, intégration ${backendVersion}`
+      `[birdnet-card] card ${CARD_VERSION}, integration ${backendVersion}`
     );
     this.dispatchEvent(
       new CustomEvent("hass-notification", {
@@ -186,7 +392,7 @@ class BirdNetCard extends HTMLElement {
   }
 
   _reloadWithoutCache() {
-    // L'API caches demande HTTPS ou localhost : repli sur un rechargement sec.
+    // The caches API requires HTTPS or localhost: fall back to a plain reload.
     if (!("caches" in window)) {
       window.location.reload();
       return;
@@ -198,25 +404,9 @@ class BirdNetCard extends HTMLElement {
       .then(() => window.location.reload());
   }
 
-  getCardSize() {
-    const config = this._config || DEFAULTS;
-    const media = config.show_image
-      ? config.layout === "compact"
-        ? 1
-        : 3
-      : 1;
-    const rows = config.show_log ? Math.ceil((Number(config.max_rows) || 10) / 2) : 0;
-    return media + 1 + rows;
-  }
+  // -------------------------------------------------------------------- data
 
-  // ---------------------------------------------------------------- données
-
-  get _t() {
-    const language = (this._hass?.locale?.language || "en").slice(0, 2);
-    return STRINGS[language] || STRINGS.en;
-  }
-
-  /** Agrège le journal du jour, quelle que soit la forme de l'attribut. */
+  /** Aggregate today's log, whichever attribute shape is available. */
   _buildRows(attributes) {
     const summary = attributes.species;
     if (Array.isArray(summary) && summary.length && summary[0].name) {
@@ -270,6 +460,7 @@ class BirdNetCard extends HTMLElement {
     return [...grouped.values()].sort((a, b) => b.time.localeCompare(a.time));
   }
 
+  /** Wikipedia page for a species; `force` ignores the wikipedia toggle. */
   _speciesUrl(name, force = false) {
     if ((!this._config.wikipedia && !force) || !name) return "";
     const language =
@@ -280,7 +471,7 @@ class BirdNetCard extends HTMLElement {
     )}`;
   }
 
-  // ---------------------------------------------------------------- rendu
+  // ------------------------------------------------------------------ render
 
   _render() {
     const config = this._config;
@@ -293,7 +484,7 @@ class BirdNetCard extends HTMLElement {
       this._paint(`
         <div class="notice notice--error">
           <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
-          <span>${esc(this._t.entityMissing)} : ${esc(config.entity)}</span>
+          <span>${esc(this._t.entityMissing)}: ${esc(config.entity)}</span>
         </div>`);
       return;
     }
@@ -343,9 +534,7 @@ class BirdNetCard extends HTMLElement {
       this._renderHeader({ name, scientific, confidence, time, image, audio, t })
     );
     if (config.show_log) {
-      parts.push(
-        this._renderLog({ visibleRows, speciesCount, detectionCount, t })
-      );
+      parts.push(this._renderLog({ visibleRows, speciesCount, detectionCount, t }));
     }
 
     const target =
@@ -374,7 +563,7 @@ class BirdNetCard extends HTMLElement {
 
     const pill =
       config.show_chips && confidence !== null
-        ? `<span class="pill pill--${level}" title="${confidence} % ${esc(t.confidence)}">
+        ? `<span class="pill pill--${level}" title="${esc(t.confidenceTitle(confidence))}">
              <ha-icon icon="mdi:shield-check"></ha-icon>${confidence}%
            </span>`
         : "";
@@ -388,7 +577,7 @@ class BirdNetCard extends HTMLElement {
          </button>`
       : "";
 
-    // Grande image : titre en incrustation sur un dégradé, zéro ligne perdue.
+    // Large picture: the title sits on a scrim, so no vertical space is wasted.
     if (image && config.layout !== "compact") {
       return `
         <div class="hero" data-action="primary" role="button" tabindex="0">
@@ -402,7 +591,7 @@ class BirdNetCard extends HTMLElement {
         </div>`;
     }
 
-    // Vignette ou pastille d'icône : une seule bande de 64 px.
+    // Thumbnail or icon badge: a single 64 px band.
     const thumb = image
       ? `<img class="thumb" src="${esc(image)}" alt="${label}" loading="lazy" />`
       : `<div class="thumb thumb--icon"><ha-icon icon="mdi:bird"></ha-icon></div>`;
@@ -437,8 +626,8 @@ class BirdNetCard extends HTMLElement {
       </div>`;
     }
 
-    // La colonne mise en avant (valeur en gras à droite + jauge) suit l'option
-    // emphasis ; l'autre information reste lisible, en retrait.
+    // The highlighted column (bold value on the right plus the gauge) follows
+    // the emphasis option; the other figure stays readable, just quieter.
     const byCount = config.emphasis === "count";
     const maxCount = Math.max(...visibleRows.map((row) => row.count), 1);
     const ordered = byCount
@@ -493,8 +682,8 @@ class BirdNetCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>${BirdNetCard.styles}</style>
       <ha-card${style}>${inner}</ha-card>`;
 
-    // Une image cassée (Flickr expiré, hôte injoignable) ne doit pas laisser
-    // un trou : on bascule sur la mise en page sans média.
+    // A broken picture (expired Flickr link, unreachable host) must not leave a
+    // hole: fall back to the layout without media.
     const img = this.shadowRoot.querySelector("img");
     if (img) {
       img.addEventListener("error", () => {
@@ -506,7 +695,7 @@ class BirdNetCard extends HTMLElement {
     }
   }
 
-  // ---------------------------------------------------------------- actions
+  // ----------------------------------------------------------------- actions
 
   _bindActions(target, audio) {
     const action = this._config.tap_action;
@@ -581,15 +770,15 @@ class BirdNetCard extends HTMLElement {
     if (icon) icon.setAttribute("icon", playing ? "mdi:pause" : "mdi:play");
   }
 
-  // ---------------------------------------------------------------- styles
+  // ------------------------------------------------------------------ styles
 
   static get styles() {
     return `
       :host {
         --birdnet-gap: 16px;
         --birdnet-radius: 12px;
-        /* Échelle de fiabilité sur une seule teinte, celle du thème : primaire
-           franche, primaire atténuée, puis gris. */
+        /* Confidence scale on a single hue, the theme's own: solid primary,
+           muted primary, then grey. */
         --birdnet-high: var(--primary-color, #03a9f4);
         --birdnet-mid: color-mix(
           in srgb,
@@ -602,8 +791,8 @@ class BirdNetCard extends HTMLElement {
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        /* La carte se mesure elle-même : elle s'adapte à sa colonne, pas à
-           la largeur de l'écran. */
+        /* The card measures itself: it adapts to its column, not to the
+           viewport width. */
         container-type: inline-size;
         container-name: birdnet;
       }
@@ -615,7 +804,7 @@ class BirdNetCard extends HTMLElement {
         padding: 14px var(--birdnet-gap) 0;
       }
 
-      /* ---------------------------------------------------- média + espèce */
+      /* ------------------------------------------------- media and species */
       .hero {
         position: relative;
         cursor: pointer;
@@ -741,7 +930,7 @@ class BirdNetCard extends HTMLElement {
         flex: 0 0 auto;
       }
 
-      /* --------------------------------------------------------- pastilles */
+      /* --------------------------------------------------------------- pills */
       .pill {
         display: inline-flex;
         align-items: center;
@@ -782,7 +971,7 @@ class BirdNetCard extends HTMLElement {
       .play ha-icon { --mdc-icon-size: 18px; }
       .play--active { color: var(--primary-color); }
 
-      /* ----------------------------------------------------------- journal */
+      /* ----------------------------------------------------------------- log */
       .log {
         border-top: 1px solid var(--divider-color);
         padding: 10px var(--birdnet-gap) 12px;
@@ -882,9 +1071,9 @@ class BirdNetCard extends HTMLElement {
       .notice ha-icon { --mdc-icon-size: 18px; }
       .notice--error { color: var(--error-color, #db4437); padding: 14px var(--birdnet-gap); }
 
-      /* ------------------------------------------------------ responsive */
-      /* Colonne étroite (mobile, sidebar) : on resserre et on laisse la
-         ligne secondaire passer à la ligne plutôt que de tronquer. */
+      /* ---------------------------------------------------------- responsive */
+      /* Narrow column (mobile, sidebar): tighten up and let the secondary line
+         wrap rather than truncating it. */
       @container birdnet (max-width: 330px) {
         :host { --birdnet-gap: 12px; }
         .hero__name { font-size: 17px; }
@@ -896,15 +1085,13 @@ class BirdNetCard extends HTMLElement {
         .row__name { font-size: 13px; }
         .log__stats { font-size: 11px; }
       }
-      /* Vraiment étroit : les totaux passent sous le titre du journal, rien
-         n'est masqué pour autant. */
+      /* Really narrow: totals move below the log title, nothing gets hidden. */
       @container birdnet (max-width: 260px) {
         .log__head { flex-direction: column; align-items: flex-start; gap: 2px; }
         .log__stats { white-space: normal; }
         .row__major { min-width: 0; }
       }
-      /* Carte large : on gagne de la hauteur en passant le journal sur deux
-         colonnes, et l'entête respire. */
+      /* Wide card: halve the height by laying the log out in columns. */
       @container birdnet (min-width: 520px) {
         :host { --birdnet-gap: 20px; }
         .hero__name { font-size: 24px; }
@@ -928,9 +1115,9 @@ class BirdNetCard extends HTMLElement {
   }
 }
 
-// ---------------------------------------------------------------- éditeur
+// ------------------------------------------------------------------- editor
 
-const EDITOR_SCHEMA = [
+const buildSchema = (t) => [
   { name: "entity", required: true, selector: { entity: { domain: "sensor" } } },
   {
     type: "grid",
@@ -942,8 +1129,8 @@ const EDITOR_SCHEMA = [
           select: {
             mode: "dropdown",
             options: [
-              { value: "hero", label: "Grande photo" },
-              { value: "compact", label: "Vignette compacte" },
+              { value: "hero", label: t.options.hero },
+              { value: "compact", label: t.options.compact },
             ],
           },
         },
@@ -982,8 +1169,8 @@ const EDITOR_SCHEMA = [
       select: {
         mode: "dropdown",
         options: [
-          { value: "confidence", label: "La fiabilité (%)" },
-          { value: "count", label: "Le nombre de détections" },
+          { value: "confidence", label: t.options.confidence },
+          { value: "count", label: t.options.count },
         ],
       },
     },
@@ -994,33 +1181,15 @@ const EDITOR_SCHEMA = [
       select: {
         mode: "dropdown",
         options: [
-          { value: "url", label: "Ouvrir le lien BirdNET" },
-          { value: "wikipedia", label: "Ouvrir la fiche Wikipédia" },
-          { value: "more-info", label: "Fiche de l'entité" },
-          { value: "none", label: "Aucune" },
+          { value: "url", label: t.options.url },
+          { value: "wikipedia", label: t.options.wikipedia },
+          { value: "more-info", label: t.options.moreInfo },
+          { value: "none", label: t.options.none },
         ],
       },
     },
   },
 ];
-
-const EDITOR_LABELS = {
-  entity: "Entité BirdNET",
-  title: "Titre (optionnel)",
-  layout: "Mise en page",
-  show_image: "Photo",
-  show_chips: "Nom latin + fiabilité",
-  show_log: "Journal du jour",
-  show_audio: "Lecture de l'enregistrement",
-  show_footer: "Totaux du jour",
-  wikipedia: "Liens Wikipédia",
-  wikipedia_language: "Langue Wikipédia",
-  max_rows: "Lignes affichées",
-  log_min_confidence: "Seuil du journal (%)",
-  aspect_ratio: "Format de la photo",
-  emphasis: "Mettre en valeur dans le journal",
-  tap_action: "Action au clic",
-};
 
 class BirdNetCardEditor extends HTMLElement {
   setConfig(config) {
@@ -1039,9 +1208,9 @@ class BirdNetCardEditor extends HTMLElement {
 
   _update() {
     if (!this._config || !this._hass) return;
+    const t = localize(this._hass);
     if (!this._form) {
       this._form = document.createElement("ha-form");
-      this._form.computeLabel = (schema) => EDITOR_LABELS[schema.name] || schema.name;
       this._form.addEventListener("value-changed", (event) => {
         event.stopPropagation();
         this.dispatchEvent(
@@ -1054,8 +1223,9 @@ class BirdNetCardEditor extends HTMLElement {
       });
       this.appendChild(this._form);
     }
+    this._form.computeLabel = (schema) => t.labels[schema.name] || schema.name;
     this._form.hass = this._hass;
-    this._form.schema = EDITOR_SCHEMA;
+    this._form.schema = buildSchema(t);
     this._form.data = this._config;
   }
 }
@@ -1068,7 +1238,7 @@ window.customCards.push({
   type: "birdnet-card",
   name: "BirdNET",
   description:
-    "Dernière détection BirdNET (photo, espèce, fiabilité, écoute) et journal des espèces du jour.",
+    "Latest BirdNET detection (picture, species, confidence, playback) and today's species log.",
   preview: true,
   documentationURL: "https://github.com/Pulpyyyy/ha-birdnet",
 });

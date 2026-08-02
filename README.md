@@ -1,49 +1,49 @@
-# BirdNET pour Home Assistant
+# BirdNET for Home Assistant
 
-Intégration **et** carte Lovelace pour exploiter les détections d'oiseaux publiées
-sur MQTT par [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi) (via Apprise)
-ou [BirdNET-Go](https://github.com/tphakala/birdnet-go).
+A Home Assistant integration **and** its Lovelace card for the bird detections
+published over MQTT by [BirdNET-Pi](https://github.com/Nachtzuster/BirdNET-Pi)
+(through Apprise) or [BirdNET-Go](https://github.com/tphakala/birdnet-go).
 
-Fini le template sensor à déclencheur, la pile `stack-in-card` + `mushroom` +
-`markdown` : une intégration qui écoute le topic, tient le journal de la journée,
-et une seule carte qui affiche tout.
+No more trigger-based template sensor, no more `stack-in-card` + `mushroom` +
+`markdown` pile: an integration that listens to the topic and keeps the daily
+log, and a single card that shows all of it.
 
-## Ce que ça apporte
+## What you get
 
-| Entité | Description |
+| Entity | Description |
 | --- | --- |
-| `sensor.birdnet_derniere_detection` | Nom commun de la dernière espèce, plus tous les détails en attributs (photo, lien, confiance, journal du jour, résumé par espèce) |
-| `sensor.birdnet_confiance` | Confiance de la dernière détection, en % |
-| `sensor.birdnet_heure_de_detection` | Horodatage (`device_class: timestamp`) |
-| `sensor.birdnet_detections_du_jour` | Nombre de détections depuis minuit |
-| `sensor.birdnet_especes_du_jour` | Nombre d'espèces distinctes + détail par espèce |
-| `image.birdnet_derniere_detection` | Photo de l'espèce, utilisable dans `picture-entity` |
-| `event.birdnet_detection` | Déclencheur d'automatisation propre, une fois par détection |
+| `sensor.birdnet_last_detection` | Common name of the latest species, plus every detail as attributes (picture, link, confidence, daily log, per-species summary) |
+| `sensor.birdnet_confidence` | Confidence of the latest detection, in % |
+| `sensor.birdnet_detection_time` | Timestamp (`device_class: timestamp`) |
+| `sensor.birdnet_detections_today` | Number of detections since midnight |
+| `sensor.birdnet_species_today` | Number of distinct species, with a per-species breakdown |
+| `image.birdnet_last_detection` | Species picture, usable in a `picture-entity` card |
+| `event.birdnet_detection` | A clean automation trigger, fired once per detection |
 
-Plus deux services : `birdnet.simulate_detection` (pour tester la carte sans
-attendre un oiseau) et `birdnet.clear_log`.
+Plus two services: `birdnet.simulate_detection` (to test the card without
+waiting for a bird) and `birdnet.clear_log`.
 
-Le journal du jour est **persisté** : un redémarrage de Home Assistant ne le vide
-plus. Il est remis à zéro à minuit, et exclu du recorder pour ne pas gonfler la
-base.
+The daily log is **persisted**: restarting Home Assistant no longer wipes it. It
+resets at midnight and is excluded from the recorder so it does not bloat the
+database.
 
 ## Installation
 
-### HACS (recommandé)
+### HACS (recommended)
 
-1. HACS → Intégrations → menu ⋮ → *Dépôt personnalisé*
-2. URL du dépôt, catégorie **Integration**
-3. Installer *BirdNET*, puis redémarrer Home Assistant
-4. Paramètres → Appareils et services → *Ajouter une intégration* → **BirdNET**
+1. HACS → Integrations → ⋮ menu → *Custom repositories*
+2. Repository URL, category **Integration**
+3. Install *BirdNET*, then restart Home Assistant
+4. Settings → Devices & services → *Add integration* → **BirdNET**
 
-### Manuelle
+### Manual
 
-Copier `custom_components/birdnet` dans `config/custom_components/`, redémarrer,
-puis ajouter l'intégration.
+Copy `custom_components/birdnet` into `config/custom_components/`, restart, then
+add the integration.
 
-La carte est **livrée avec l'intégration** : elle est servie sur
-`/birdnet_frontend/birdnet-card.js` et ajoutée automatiquement aux ressources
-Lovelace (dashboards en mode interface). En mode YAML, ajoutez :
+The card **ships with the integration**: it is served from
+`/birdnet_frontend/birdnet-card.js` and registered automatically in the Lovelace
+resources (storage-mode dashboards). In YAML mode, add it yourself:
 
 ```yaml
 lovelace:
@@ -54,25 +54,25 @@ lovelace:
 
 ## Configuration
 
-À l'ajout de l'intégration :
+When adding the integration:
 
-| Champ | Défaut | Rôle |
+| Field | Default | Purpose |
 | --- | --- | --- |
-| Topic MQTT | `birdnet/detection` | Topic sur lequel BirdNET publie |
-| Confiance minimale | 70 % | En dessous, la détection est ignorée |
-| Espèces ignorées | — | Nom commun ou scientifique (ex. `Humain`, `Bruit`) |
+| MQTT topic | `birdnet/detection` | The topic BirdNET publishes to |
+| Minimum confidence | 70 % | Anything below is discarded |
+| Ignored species | — | Common or scientific name (e.g. `Human`, `Noise`) |
 
-Modifiable ensuite par le bouton *Configurer*, avec en plus le nombre de
-détections conservées par jour (500 par défaut).
+All of it can be changed later through *Configure*, along with the number of
+detections kept per day (500 by default).
 
-### Formats de payload acceptés
+### Accepted payloads
 
-Le parseur normalise les clés, il accepte donc indifféremment :
+The parser normalises keys, so all of these work:
 
 ```json
-{ "common_name": "Pie bavarde", "scientific_name": "Pica pica",
+{ "common_name": "Eurasian Magpie", "scientific_name": "Pica pica",
   "confidence_score": "0.9871", "date": "2026-08-01", "time": "22:06:15",
-  "link": "http://birdpi/?filename=Pie_bavarde-99-2026-08-01-birdnet-22:06:15.mp3",
+  "link": "http://birdpi/?filename=Eurasian_Magpie-99-2026-08-01-birdnet-22:06:15.mp3",
   "image": "https://upload.wikimedia.org/..." }
 ```
 
@@ -82,8 +82,8 @@ Le parseur normalise les clés, il accepte donc indifféremment :
   "BirdImage": { "URL": "https://..." } }
 ```
 
-Le modèle Apprise à coller dans BirdNET-Pi (Services de notification → corps du
-message) :
+The Apprise template to paste into BirdNET-Pi (Notification services → message
+body):
 
 ```json
 {
@@ -103,88 +103,86 @@ message) :
 }
 ```
 
-Quand le lien contient `?filename=xxx.mp3`, l'URL du clip audio BirdNET-Pi est
-reconstruite (`/By_Date/<date>/<Espece>/<fichier>`) et exposée dans l'attribut
-`audio` : la carte affiche alors un lecteur.
+When the link carries a `?filename=xxx.mp3` query, the BirdNET-Pi audio clip URL
+is rebuilt (`/By_Date/<date>/<Species>/<file>`) and exposed as the `audio`
+attribute — the card then shows a play button.
 
-## La carte
-
-```yaml
-type: custom:birdnet-card
-entity: sensor.birdnet_derniere_detection
-```
-
-Toutes les options (éditeur visuel disponible) :
+## The card
 
 ```yaml
 type: custom:birdnet-card
-entity: sensor.birdnet_derniere_detection
-title: Oiseaux du jardin      # optionnel
-layout: hero                  # hero (grande photo) | compact (vignette 56 px)
-aspect_ratio: "16:9"          # format de la photo
-show_image: true              # photo de l'espèce
-show_chips: true              # nom scientifique + pastille de fiabilité
-show_audio: true              # bouton de lecture du clip, si disponible
-show_log: true                # journal des espèces du jour
-show_footer: true             # totaux (espèces / détections)
-log_min_confidence: 70        # seuil d'affichage dans le journal
-max_rows: 10                  # lignes du journal
-emphasis: confidence          # confidence | count : ce que le journal met en avant
-wikipedia: true               # nom d'espèce cliquable vers Wikipédia
-wikipedia_language: fr        # par défaut : langue de l'utilisateur
-tap_action: url               # url | wikipedia | more-info | none
+entity: sensor.birdnet_last_detection
 ```
 
-`emphasis` bascule la valeur en gras à droite et la jauge : `confidence` met en
-avant la meilleure fiabilité de l'espèce, `count` son nombre de détections (la
-jauge devient alors proportionnelle à l'espèce la plus entendue, et le journal
-est trié par nombre décroissant). L'autre valeur reste affichée, en retrait.
+Every option (a visual editor is available):
 
-`tap_action: url` ouvre le lien BirdNET du message MQTT, avec repli sur
-Wikipédia s'il est absent ; `wikipedia` va toujours sur Wikipédia.
+```yaml
+type: custom:birdnet-card
+entity: sensor.birdnet_last_detection
+title: Garden birds          # optional
+layout: hero                 # hero (large picture) | compact (56 px thumbnail)
+aspect_ratio: "16:9"         # picture aspect ratio
+show_image: true             # species picture
+show_chips: true             # scientific name + confidence pill
+show_audio: true             # play button for the clip, when available
+show_log: true               # today's species log
+show_footer: true            # totals (species / detections)
+log_min_confidence: 70       # display threshold for the log
+max_rows: 10                 # log rows
+emphasis: confidence         # confidence | count: what the log highlights
+wikipedia: true              # species names link to Wikipedia
+wikipedia_language: en       # defaults to the user's language
+tap_action: url              # url | wikipedia | more-info | none
+```
 
-### Parti pris de design
+`emphasis` switches the bold figure on the right and the gauge: `confidence`
+highlights the best confidence for the species, `count` its number of detections
+(the gauge then becomes relative to the most heard species, and the log is
+sorted by descending count). The other figure stays visible, just quieter.
 
-* **Photo en fond, texte en incrustation.** Le nom, le nom latin, l'heure et la
-  fiabilité tiennent sur la photo : trois lignes de carte économisées, aucune
-  information perdue.
-* **Fiabilité lisible d'un coup d'œil.** Pastille colorée sur une échelle de
-  confiance (≥ 90 %, ≥ 75 %, en dessous) et micro-jauge sous chaque ligne du
-  journal. Une seule teinte, celle du thème : couleur primaire franche, primaire
-  atténuée, puis gris — pas un code d'alerte, une échelle, et la carte suit
-  automatiquement tes couleurs.
-* **Journal dense.** Une ligne par espèce : heure, nom cliquable, nombre de
-  détections, meilleure fiabilité. Chiffres en chasse fixe pour un alignement
-  net. Les totaux du jour sont dans l'en-tête de section, pas sur une ligne
-  supplémentaire.
-* **Écoute sur place.** Quand le clip est disponible, un bouton de lecture
-  discret remplace le lecteur `<audio>` natif (30 px au lieu de 54, et il suit
-  le thème).
-* **Vraiment responsive.** La carte se mesure elle-même (*container queries*) :
-  elle s'adapte à la largeur de **sa colonne**, pas à celle de l'écran. En
-  colonne étroite elle se resserre et laisse respirer, au-delà de 520 px le
-  journal passe sur deux colonnes (trois au-delà de 760 px) pour diviser la
-  hauteur par deux.
-* **Accessible.** Zones cliquables au clavier avec anneau de focus, libellés
-  ARIA sur le bouton de lecture, animations désactivées si
-  `prefers-reduced-motion`, image cassée → repli automatique sans trou dans la
-  mise en page.
+`tap_action: url` opens the BirdNET link from the MQTT message, falling back to
+Wikipedia when it is missing; `wikipedia` always goes to Wikipedia.
 
-### Compatibilité avec un template sensor existant
+The card interface and its editor are translated into English, French, German,
+Spanish and Italian, following the Home Assistant user language.
 
-La carte sait aussi lire un capteur du type de ceux du tuto HACF (attributs
-`common_name`, `image`, `link`, `confidence_score`, `bird_events`) :
+### Design notes
+
+* **Picture as a backdrop, text on top.** Name, scientific name, time and
+  confidence sit on the picture: three card rows saved, no information lost.
+* **Confidence readable at a glance.** A coloured pill on a confidence scale
+  (≥ 90 %, ≥ 75 %, below) and a micro gauge under each log row. A single hue,
+  the theme's own: solid primary, muted primary, then grey — a scale, not an
+  alert code, and the card follows your colours.
+* **Dense log.** One row per species: time, clickable name, number of
+  detections, best confidence. Tabular figures for clean alignment. Daily totals
+  live in the section header rather than on an extra row.
+* **Listen in place.** When the clip is available, a discreet play button
+  replaces the native `<audio>` player (30 px instead of 54, and it follows the
+  theme).
+* **Genuinely responsive.** The card measures itself (*container queries*): it
+  adapts to the width of **its column**, not of the screen. In a narrow column
+  it tightens up; past 520 px the log moves to two columns (three past 760 px),
+  halving its height.
+* **Accessible.** Keyboard-reachable tap targets with a focus ring, ARIA labels
+  on the play button, animations disabled under `prefers-reduced-motion`, and a
+  broken picture falls back without leaving a hole in the layout.
+
+### Working with an existing template sensor
+
+The card also reads sensors of the kind found in community tutorials
+(`common_name`, `image`, `link`, `confidence_score`, `bird_events` attributes):
 
 ```yaml
 type: custom:birdnet-card
 entity: sensor.birdnet_go_events
 ```
 
-Elle fonctionne donc avant même de basculer sur l'intégration. Inversement,
-`sensor.birdnet_derniere_detection` expose un attribut `bird_events` au même
-format, pour ne pas casser une carte markdown existante.
+So it works before you switch to the integration. Conversely,
+`sensor.birdnet_last_detection` exposes a `bird_events` attribute in the same
+shape, so an existing markdown card keeps working.
 
-## Automatisation
+## Automation
 
 ```yaml
 triggers:
@@ -192,33 +190,34 @@ triggers:
     entity_id: event.birdnet_detection
 conditions:
   - condition: template
-    value_template: "{{ trigger.to_state.attributes.common_name == 'Chouette hulotte' }}"
+    value_template: "{{ trigger.to_state.attributes.common_name == 'Tawny Owl' }}"
 actions:
   - action: notify.mobile_app
     data:
       title: "{{ trigger.to_state.attributes.common_name }}"
       message: >-
-        {{ trigger.to_state.attributes.confidence }} % à
+        {{ trigger.to_state.attributes.confidence }} % at
         {{ trigger.to_state.attributes.time }}
       data:
         image: "{{ trigger.to_state.attributes.image }}"
 ```
 
-## Dépannage
+## Troubleshooting
 
-* Rien ne remonte → activez le capteur de diagnostic *Topic MQTT* : il compte les
-  messages reçus et affiche la dernière erreur de parsing.
-* Vérifiez le topic avec `mosquitto_sub -h <broker> -t 'birdnet/#' -v`.
-* Détections filtrées → baissez la confiance minimale dans les options.
-* La carte n'apparaît pas dans la liste → videz le cache du navigateur, et
-  vérifiez la ressource dans Paramètres → Tableaux de bord → menu ⋮ → Ressources.
+* Nothing shows up → enable the *MQTT topic* diagnostic sensor: it counts
+  received messages and reports the last parsing error.
+* Check the topic with `mosquitto_sub -h <broker> -t 'birdnet/#' -v`.
+* Detections filtered out → lower the minimum confidence in the options.
+* The card is missing from the picker → clear the browser cache and check the
+  resource under Settings → Dashboards → ⋮ → Resources.
 
-## Crédits
+## Credits
 
-Format du payload et logique du tableau inspirés du
-[tuto BirdNET de la communauté HACF](https://forum.hacf.fr/t/birdnet-tuto-comment-reperer-et-ecouter-les-oiseaux-du-jardin/66856).
+Payload format and log layout inspired by the
+[BirdNET tutorial from the HACF community](https://forum.hacf.fr/t/birdnet-tuto-comment-reperer-et-ecouter-les-oiseaux-du-jardin/66856).
 
-Mécanisme d'embarquement de la carte dans l'intégration (chemin statique,
-ressource Lovelace, contrôle de version anti-cache) repris du
-[guide développeur de KipK](https://forum.hacf.fr/t/guide-developpeur-carte-lovelace-embarquee-dans-une-integration-home-assistant/74074),
-tiré de l'intégration [marees_france](https://github.com/KipK/marees_france).
+The card embedding mechanism (static path, Lovelace resource, anti-cache version
+check) follows
+[KipK's developer guide](https://forum.hacf.fr/t/guide-developpeur-carte-lovelace-embarquee-dans-une-integration-home-assistant/74074),
+drawn from the [marees_france](https://github.com/KipK/marees_france)
+integration.
