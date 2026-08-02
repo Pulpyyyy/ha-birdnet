@@ -1,4 +1,4 @@
-"""Constantes de l'intégration BirdNET."""
+"""Constants for the BirdNET integration."""
 
 from __future__ import annotations
 
@@ -8,8 +8,7 @@ from typing import Final
 
 DOMAIN: Final = "birdnet"
 
-# La version fait foi pour le cache-busting de la ressource Lovelace et pour la
-# vérification de version côté carte.
+# The version is the reference for the card-side version check.
 MANIFEST_PATH: Final = Path(__file__).parent / "manifest.json"
 with MANIFEST_PATH.open(encoding="utf-8") as manifest_file:
     INTEGRATION_VERSION: Final[str] = json.load(manifest_file).get("version", "0.0.0")
@@ -19,7 +18,7 @@ CONF_TOPIC: Final = "topic"
 CONF_MIN_CONFIDENCE: Final = "min_confidence"
 CONF_EXCLUDED_SPECIES: Final = "excluded_species"
 CONF_MAX_DETECTIONS: Final = "max_detections"
-# Secret propre à l'entrée, utilisé pour signer les URLs d'extraits relayés.
+# Per-entry secret, used to sign the URLs of relayed audio clips.
 CONF_CLIP_SECRET: Final = "clip_secret"
 
 DEFAULT_TOPIC: Final = "birdnet/detection"
@@ -27,7 +26,7 @@ DEFAULT_MIN_CONFIDENCE: Final = 70
 DEFAULT_MAX_DETECTIONS: Final = 500
 DEFAULT_NAME: Final = "BirdNET"
 
-# Stockage des détections du jour
+# Storage of the daily detections
 STORAGE_KEY: Final = f"{DOMAIN}.detections"
 STORAGE_VERSION: Final = 1
 
@@ -35,9 +34,9 @@ STORAGE_VERSION: Final = 1
 URL_BASE: Final = "/birdnet_frontend"
 CARD_FILENAME: Final = "birdnet-card.js"
 
-# Modules JS livrés avec l'intégration et publiés dans les ressources Lovelace.
-# L'URL enregistrée est nue : le suivi de version passe par la commande
-# websocket birdnet/version, pas par un paramètre ?v=.
+# JS modules shipped with the integration and published to the Lovelace
+# resources. The registered URL is bare: version tracking goes through the
+# birdnet/version websocket command, not a ?v= parameter.
 JSMODULES: Final[list[dict[str, str]]] = [
     {"name": "BirdNET Card", "filename": CARD_FILENAME},
 ]

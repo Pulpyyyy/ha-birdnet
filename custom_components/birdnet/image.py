@@ -1,4 +1,4 @@
-"""Image de la dernière espèce détectée."""
+"""Picture of the latest detected species."""
 
 from __future__ import annotations
 
@@ -16,15 +16,15 @@ async def async_setup_entry(
     entry: BirdNetConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Ajoute l'entité image."""
+    """Add the image entity."""
     async_add_entities([BirdNetImage(hass, entry.runtime_data)])
 
 
 class BirdNetImage(BirdNetEntity, ImageEntity):
-    """Photo de l'espèce (Flickr, Wikimedia ou BirdNET-Go selon la source)."""
+    """Species picture, from Flickr, Wikimedia or BirdNET-Go depending on the source."""
 
     def __init__(self, hass: HomeAssistant, coordinator: BirdNetCoordinator) -> None:
-        """Initialise l'entité image."""
+        """Initialise the image entity."""
         BirdNetEntity.__init__(self, coordinator, "last_detection")
         ImageEntity.__init__(self, hass, verify_ssl=True)
         self._attr_image_url = None
@@ -32,7 +32,7 @@ class BirdNetImage(BirdNetEntity, ImageEntity):
 
     @callback
     def _refresh_url(self) -> bool:
-        """Met à jour l'URL ; retourne True si elle a changé."""
+        """Update the URL; return True when it changed."""
         detection = self.coordinator.last_detection
         url = detection.image_url if detection else None
         if url == self._attr_image_url:
@@ -44,6 +44,6 @@ class BirdNetImage(BirdNetEntity, ImageEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        """Recharge l'image quand l'espèce change."""
+        """Reload the picture when the species changes."""
         self._refresh_url()
         self.async_write_ha_state()

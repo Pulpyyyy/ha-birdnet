@@ -1,4 +1,4 @@
-"""Config flow de l'intégration BirdNET."""
+"""Config flow for the BirdNET integration."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ _SPECIES_SELECTOR = selector.SelectSelector(
 
 
 def _validate_topic(topic: str) -> str | None:
-    """Retourne un code d'erreur si le topic MQTT est invalide."""
+    """Return an error code when the MQTT topic is invalid."""
     topic = topic.strip()
     if not topic or topic.startswith("$"):
         return "invalid_topic"
@@ -49,14 +49,14 @@ def _validate_topic(topic: str) -> str | None:
 
 
 class BirdNetConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Assistant de configuration."""
+    """Setup wizard."""
 
     VERSION = 1
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Première (et unique) étape."""
+        """First (and only) step."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -70,7 +70,7 @@ class BirdNetConfigFlow(ConfigFlow, domain=DOMAIN):
                     title=DEFAULT_NAME,
                     data={
                         CONF_TOPIC: topic,
-                        # Signe les URLs des extraits relayés par la vue HTTP.
+                        # Signs the URLs of the clips relayed by the HTTP view.
                         CONF_CLIP_SECRET: secrets.token_hex(32),
                     },
                     options={
@@ -105,17 +105,17 @@ class BirdNetConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
-        """Retourne le flux d'options."""
+        """Return the options flow."""
         return BirdNetOptionsFlow()
 
 
 class BirdNetOptionsFlow(OptionsFlow):
-    """Modification des options après installation."""
+    """Change the options after installation."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Formulaire d'options."""
+        """Options form."""
         errors: dict[str, str] = {}
         options = self.config_entry.options
 

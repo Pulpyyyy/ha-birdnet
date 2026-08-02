@@ -1,20 +1,21 @@
-"""Normalisation des payloads BirdNET reçus par MQTT.
+"""Normalisation of the BirdNET payloads received over MQTT.
 
-Le but est d'accepter indifféremment :
+The goal is to accept any of these interchangeably:
 
-* BirdNET-Pi via Apprise (clés en snake_case, valeurs toujours des chaînes) ::
+* BirdNET-Pi through Apprise (snake_case keys, values always strings) ::
 
-      {"common_name": "Pie bavarde", "scientific_name": "Pica pica",
+      {"common_name": "Eurasian Magpie", "scientific_name": "Pica pica",
        "confidence_score": "0.9871", "link": "http://.../?filename=x.mp3",
        "date": "2026-08-01", "time": "22:06:15", "image": "https://..."}
 
-* BirdNET-Go (clés en PascalCase, ``BirdImage`` imbriqué) ::
+* BirdNET-Go (PascalCase keys, nested ``BirdImage``) ::
 
       {"CommonName": "Eurasian Magpie", "ScientificName": "Pica pica",
        "Confidence": 0.9871, "Date": "2026-08-01", "Time": "22:06:15",
        "BirdImage": {"URL": "https://..."}}
 
-* les scripts maison du tuto HACF (``common_name`` / ``timestamp`` ISO).
+* the home-made scripts from community tutorials (``common_name`` with an ISO
+  ``timestamp``).
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ from urllib.parse import parse_qs, urlparse
 
 from homeassistant.util import dt as dt_util
 
-# Alias de clés, une fois la clé « aplatie » (minuscules, sans _ ni -).
+# Key aliases, once the key has been flattened (lowercase, no _ or -).
 _ALIASES: dict[str, tuple[str, ...]] = {
     "common_name": ("commonname", "comname", "species", "birdname", "name"),
     "scientific_name": ("scientificname", "sciname", "latinname", "scientific"),
@@ -44,7 +45,7 @@ _ALIASES: dict[str, tuple[str, ...]] = {
     "source": ("sourcenode", "source", "station"),
 }
 
-# Nom de fichier BirdNET-Pi : Pie_bavarde-99-2026-08-01-birdnet-22:06:15.mp3
+# BirdNET-Pi file name: Eurasian_Magpie-99-2026-08-01-birdnet-22:06:15.mp3
 _RE_PI_FILENAME = re.compile(r"^(?P<name>.+?)-\d+-\d{4}-\d{2}-\d{2}-")
 
 
@@ -53,7 +54,7 @@ def _flatten_key(key: str) -> str:
 
 
 def _pick(payload: dict[str, Any], target: str) -> Any:
-    """Retourne la première valeur du payload correspondant à un alias connu."""
+    """Return the first payload value matching a known alias."""
     flat = {_flatten_key(k): v for k, v in payload.items()}
     for alias in _ALIASES[target]:
         if alias in flat:
@@ -64,7 +65,7 @@ def _pick(payload: dict[str, Any], target: str) -> Any:
 
 
 def _as_url(value: Any) -> str | None:
-    """Extrait une URL, y compris depuis un objet imbriqué (BirdNET-Go)."""
+    """Extract a URL, including from a nested object (BirdNET-Go)."""
     if isinstance(value, dict):
         for key in ("URL", "url", "Url"):
             if url := value.get(key):
@@ -87,9 +88,9 @@ def _as_float(value: Any) -> float | None:
 
 
 def _as_confidence(value: Any) -> float | None:
-    """Ramène une confiance à l'intervalle 0..1.
+    """Bring a confidence back into the 0..1 range.
 
-    Accepte 0.9871, "0.9871", "98.71%" ou 99.
+    Accepts 0.9871, "0.9871", "98.71%" or 99.
     """
     number = _as_float(value)
     if number is None:
@@ -102,7 +103,7 @@ def _as_confidence(value: Any) -> float | None:
 
 
 def _parse_datetime(payload: dict[str, Any]) -> datetime:
-    """Reconstruit l'horodatage local de la détection."""
+    """Rebuild the local timestamp of the detection."""
     if raw := _pick(payload, "timestamp"):
         if parsed := dt_util.parse_datetime(str(raw)):
             return dt_util.as_local(
@@ -126,21 +127,25 @@ def _parse_datetime(payload: dict[str, Any]) -> datetime:
 
 
 def _derive_audio_url(link: str | None, common_name: str, moment: datetime) -> str | None:
-    """Reconstruit l'URL du clip audio BirdNET-Pi à partir du lien d'écoute.
+    """Rebuild the BirdNET-Pi audio clip URL from the listen link.
 
-    ``http://birdpi/?filename=Pie_bavarde-99-2026-08-01-birdnet-22:06:15.mp3``
-    devient ``http://birdpi/By_Date/2026-08-01/Pie_bavarde/<filename>``.
+    ``http://birdnet-pi/?filename=Eurasian_Magpie-99-2026-08-01-birdnet-22:06:15.mp3``
+    becomes ``http://birdnet-pi/By_Date/2026-08-01/Eurasian_Magpie/<filename>``.
     """
     if not link:
         return None
     parsed = urlparse(link)
-    if link.lower().endswith((".mp3", ".wav", ".flac", ".ogg")):
+    # Match on the path only: the BirdNET-Pi listen link also ends in ".mp3",
+    # but inside its query string ("?filename=x.mp3"). Testing the whole URL
+    # would mistake that HTML page for the clip itself.
+    if parsed.path.lower().endswith((".mp3", ".wav", ".flac", ".ogg")):
         return link
     filenames = parse_qs(parsed.query).get("filename")
     if not filenames:
         return None
     filename = filenames[0]
-    # Le dossier porte le nom commun tel qu'il apparaît en tête du fichier.
+    # The folder is named after the common name, as it appears at the head of
+    # the file name.
     match = _RE_PI_FILENAME.match(filename)
     folder = match.group("name") if match else common_name.replace(" ", "_")
     base = f"{parsed.scheme}://{parsed.netloc}"
@@ -149,7 +154,7 @@ def _derive_audio_url(link: str | None, common_name: str, moment: datetime) -> s
 
 @dataclass(slots=True)
 class Detection:
-    """Une détection normalisée."""
+    """A normalised detection."""
 
     common_name: str
     scientific_name: str | None = None
@@ -165,7 +170,7 @@ class Detection:
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> Detection | None:
-        """Construit une détection depuis un payload MQTT décodé."""
+        """Build a detection from a decoded MQTT payload."""
         common_name = _pick(payload, "common_name")
         scientific_name = _pick(payload, "scientific_name")
         if not common_name and not scientific_name:
@@ -196,13 +201,13 @@ class Detection:
 
     @property
     def confidence_pct(self) -> float | None:
-        """Confiance en pourcentage, arrondie à l'entier."""
+        """Confidence as a percentage, rounded to the nearest integer."""
         if self.confidence is None:
             return None
         return round(self.confidence * 100)
 
     def as_dict(self) -> dict[str, Any]:
-        """Représentation exposée dans les attributs d'entité et la carte."""
+        """Representation exposed in the entity attributes and to the card."""
         return {
             "name": self.common_name,
             "common_name": self.common_name,
@@ -219,7 +224,7 @@ class Detection:
         }
 
     def to_store(self) -> dict[str, Any]:
-        """Représentation persistée sur disque."""
+        """Representation persisted to disk."""
         return {
             "common_name": self.common_name,
             "scientific_name": self.scientific_name,
@@ -236,7 +241,7 @@ class Detection:
 
     @classmethod
     def from_store(cls, data: dict[str, Any]) -> Detection | None:
-        """Relit une détection persistée ; ignore les entrées corrompues."""
+        """Read back a persisted detection; skip corrupted entries."""
         try:
             detected_at = dt_util.parse_datetime(data["detected_at"])
             if detected_at is None:

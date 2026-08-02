@@ -8,13 +8,17 @@ No more trigger-based template sensor, no more `stack-in-card` + `mushroom` +
 `markdown` pile: an integration that listens to the topic and keeps the daily
 log, and a single card that shows all of it.
 
+<p align="center">
+  <img src="docs/card-dark.png" alt="BirdNET card: latest detection and today's species log" width="420">
+</p>
+
 ## What you get
 
 | Entity | Description |
 | --- | --- |
 | `sensor.birdnet_last_detection` | Common name of the latest species, plus every detail as attributes (picture, link, confidence, daily log, per-species summary) |
-| `sensor.birdnet_confidence` | Confidence of the latest detection, in % |
-| `sensor.birdnet_detection_time` | Timestamp (`device_class: timestamp`) |
+| `sensor.birdnet_confidence` | Confidence of the latest detection, in % — *disabled by default* |
+| `sensor.birdnet_last_detection_time` | Timestamp (`device_class: timestamp`) — *disabled by default* |
 | `sensor.birdnet_detections_today` | Number of detections since midnight |
 | `sensor.birdnet_species_today` | Number of distinct species, with a per-species breakdown |
 | `image.birdnet_last_detection` | Species picture, usable in a `picture-entity` card |
@@ -22,6 +26,17 @@ log, and a single card that shows all of it.
 
 Plus two services: `birdnet.simulate_detection` (to test the card without
 waiting for a bird) and `birdnet.clear_log`.
+
+Entity ids are always in English, whatever your Home Assistant language, so the
+ones above are the ones you get. Displayed names follow your language. Entities
+created before version 1.0.1 keep the id they were given at the time; rename
+them, or remove and re-add the integration, to line them up.
+
+Two sensors are disabled by default because they only republish an attribute of
+`sensor.birdnet_last_detection`. Enable them from the device page if you want
+them as entities of their own. The daily counters, on the other hand, stay
+enabled: the main sensor's attributes are excluded from the recorder, so those
+counters are the only way to get a history.
 
 The daily log is **persisted**: restarting Home Assistant no longer wipes it. It
 resets at midnight and is excluded from the recorder so it does not bloat the
@@ -80,7 +95,7 @@ The parser normalises keys, so all of these work:
 ```json
 { "common_name": "Eurasian Magpie", "scientific_name": "Pica pica",
   "confidence_score": "0.9871", "date": "2026-08-01", "time": "22:06:15",
-  "link": "http://birdpi/?filename=Eurasian_Magpie-99-2026-08-01-birdnet-22:06:15.mp3",
+  "link": "http://birdnet-pi.local/?filename=Eurasian_Magpie-99-2026-08-01-birdnet-22:06:15.mp3",
   "image": "https://upload.wikimedia.org/..." }
 ```
 
@@ -141,13 +156,49 @@ type: custom:birdnet-card
 entity: sensor.birdnet_last_detection
 ```
 
+It follows the theme, in both directions:
+
+| Dark | Light |
+| --- | --- |
+| <img src="docs/card-dark.png" alt="BirdNET card, dark theme" width="420"> | <img src="docs/card-light.png" alt="BirdNET card, light theme" width="420"> |
+
+### Listening to the detection
+
+The round button at the top right of the picture plays the recording BirdNET
+kept for that detection — the few seconds of audio the identification was made
+from. It appears on its own, only when a clip is available for the latest
+detection, and turns into a pause button while playing. Clicking it never
+triggers the card's own tap action.
+
+It is deliberately not the native `<audio>` player: 30 px instead of 54, and it
+follows your theme. Playback goes through Home Assistant rather than straight to
+BirdNET, which is what makes it work over HTTPS and from outside your network —
+see [Audio clips are relayed by Home Assistant](#audio-clips-are-relayed-by-home-assistant).
+
+Set `show_audio: false` to hide it.
+
+### Layouts
+
+`hero` is the default, with the large picture shown above.
+
+`compact` swaps it for a 56 px thumbnail, for dense dashboards. Everything else
+is unchanged.
+
+`minimal` is that same band on its own, without the log: one 80 px row carrying
+the species, the time, the confidence and the play button. Handy at the top of a
+dashboard, or next to other cards in a grid.
+
+| `layout: compact` | `layout: minimal` |
+| --- | --- |
+| <img src="docs/card-compact.png" alt="BirdNET card, compact layout" width="420"> | <img src="docs/card-minimal.png" alt="BirdNET card, minimal layout" width="420"> |
+
 Every option (a visual editor is available):
 
 ```yaml
 type: custom:birdnet-card
 entity: sensor.birdnet_last_detection
 title: Garden birds          # optional
-layout: hero                 # hero (large picture) | compact (56 px thumbnail)
+layout: hero                 # hero | compact | minimal, see below
 aspect_ratio: "16:9"         # picture aspect ratio
 show_image: true             # species picture
 show_chips: true             # scientific name + confidence pill
@@ -172,6 +223,12 @@ visible, just quieter.
 recent first, or most detections first in `count` mode. `time`, `count` and
 `confidence` pin the order whatever is highlighted, so you can put the detection
 count forward while keeping a chronological log.
+
+<img src="docs/card-count.png" alt="BirdNET card with emphasis: count" width="420">
+
+Above, `emphasis: count`: the bold figure and the gauge now carry the number of
+detections, the gauge is relative to the most heard species, and the confidence
+steps back to the quiet slot.
 
 `tap_action: url` opens the BirdNET link from the MQTT message, falling back to
 Wikipedia when it is missing; `wikipedia` always goes to Wikipedia.
@@ -249,6 +306,11 @@ actions:
   resource under Settings → Dashboards → ⋮ → Resources.
 
 ## Credits
+
+The Common Wood Pigeon photograph in the screenshots is by
+[Bengt Nyman](https://www.flickr.com/people/97469566@N00), licensed
+[CC BY 2.0](https://creativecommons.org/licenses/by/2.0), via
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Columba_palumbus_EM1B1397_(27445478998).jpg).
 
 Payload format and log layout inspired by the
 [BirdNET tutorial from the HACF community](https://forum.hacf.fr/t/birdnet-tuto-comment-reperer-et-ecouter-les-oiseaux-du-jardin/66856).

@@ -1,4 +1,4 @@
-"""Diagnostics de l'intégration BirdNET."""
+"""Diagnostics for the BirdNET integration."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ TO_REDACT = {"latitude", "longitude"}
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: BirdNetConfigEntry
 ) -> dict[str, Any]:
-    """Retourne les informations utiles au dépannage."""
+    """Return the information useful for troubleshooting."""
     coordinator = entry.runtime_data
     last = coordinator.last_detection.as_dict() if coordinator.last_detection else None
     if last:
@@ -28,6 +28,7 @@ async def async_get_config_entry_diagnostics(
             "max_detections": coordinator.max_detections,
         },
         "messages_received": coordinator.messages_received,
+        "duplicates_ignored": coordinator.duplicates_ignored,
         "last_error": coordinator.last_error,
         "last_detection": last,
         "detections_today": len(coordinator.detections),

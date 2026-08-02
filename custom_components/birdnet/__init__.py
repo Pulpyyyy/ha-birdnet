@@ -1,4 +1,4 @@
-"""Intégration BirdNET (BirdNET-Pi / BirdNET-Go) via MQTT."""
+"""The BirdNET integration (BirdNET-Pi / BirdNET-Go) over MQTT."""
 
 from __future__ import annotations
 
@@ -47,24 +47,24 @@ def websocket_get_version(
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
-    """Renvoie la version de l'intégration à la carte.
+    """Return the integration version to the card.
 
-    L'URL versionnée ne suffit pas : une page en cache (surtout dans
-    l'application mobile) continue de charger l'ancien module. La carte compare
-    les deux versions et propose un rechargement si elles divergent.
+    A versioned URL is not enough: a cached page (especially in the companion
+    app) keeps loading the old module. The card compares both versions and
+    offers a reload when they differ.
     """
     connection.send_result(msg["id"], {"version": INTEGRATION_VERSION})
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Enregistre la carte une seule fois, quel que soit le nombre d'entrées."""
+    """Register the card once, whatever the number of config entries."""
     websocket_api.async_register_command(hass, websocket_get_version)
 
     async def _setup_frontend(_event=None) -> None:
         await JSModuleRegistration(hass).async_register()
 
-    # Avant EVENT_HOMEASSISTANT_STARTED, hass.data["lovelace"] n'existe pas
-    # encore : l'enregistrement de la ressource serait silencieusement ignoré.
+    # Before EVENT_HOMEASSISTANT_STARTED, hass.data["lovelace"] does not exist
+    # yet: registering the resource would be silently ignored.
     if hass.state is CoreState.running:
         await _setup_frontend()
     else:
@@ -74,13 +74,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> bool:
-    """Configure une instance BirdNET."""
+    """Set up a BirdNET instance."""
     if not await mqtt.async_wait_for_mqtt_client(hass):
-        raise ConfigEntryNotReady("Le client MQTT n'est pas disponible")
+        raise ConfigEntryNotReady("The MQTT client is not available")
 
-    # Entrées créées avant l'arrivée du relais audio : on complète le secret.
-    # Aucun écouteur n'est encore branché ici, la mise à jour ne déclenche donc
-    # pas de rechargement.
+    # Entries created before the audio relay existed: fill in the secret. No
+    # listener is attached yet at this point, so the update does not trigger a
+    # reload.
     if CONF_CLIP_SECRET not in entry.data:
         hass.config_entries.async_update_entry(
             entry,
@@ -100,7 +100,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> b
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> bool:
-    """Décharge une instance BirdNET."""
+    """Unload a BirdNET instance."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         await entry.runtime_data.async_shutdown()
@@ -108,20 +108,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> 
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> None:
-    """Retire la ressource Lovelace quand la dernière entrée disparaît."""
+    """Remove the Lovelace resource when the last entry goes away."""
     if hass.config_entries.async_entries(DOMAIN):
         return
     await JSModuleRegistration(hass).async_unregister()
 
 
 async def _async_reload_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> None:
-    """Recharge l'entrée après modification des options."""
+    """Reload the entry after the options changed."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
 @callback
 def _async_register_services(hass: HomeAssistant) -> None:
-    """Enregistre les services une seule fois."""
+    """Register the services once."""
     if hass.services.has_service(DOMAIN, SERVICE_CLEAR_LOG):
         return
 
@@ -133,7 +133,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
         if entry_id := call.data.get("entry_id"):
             entries = [entry for entry in entries if entry.entry_id == entry_id]
             if not entries:
-                raise ServiceValidationError(f"Entrée BirdNET inconnue : {entry_id}")
+                raise ServiceValidationError(f"Unknown BirdNET entry: {entry_id}")
         return [entry.runtime_data for entry in entries]
 
     async def _handle_clear_log(call: ServiceCall) -> None:
@@ -152,7 +152,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
             {k: v for k, v in payload.items() if v is not None}
         )
         if detection is None:
-            raise ServiceValidationError("Impossible de construire la détection")
+            raise ServiceValidationError("Unable to build the detection")
         for coordinator in _coordinators(call):
             coordinator.async_add_detection(detection)
 

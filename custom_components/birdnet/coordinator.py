@@ -1,4 +1,4 @@
-"""Collecte des détections BirdNET publiées sur MQTT."""
+"""Collection of the BirdNET detections published over MQTT."""
 
 from __future__ import annotations
 
@@ -35,16 +35,18 @@ type BirdNetConfigEntry = ConfigEntry[BirdNetCoordinator]
 
 
 class BirdNetCoordinator:
-    """Garde en mémoire la dernière détection et le journal du jour."""
+    """Holds the latest detection and the log for the day."""
 
     def __init__(self, hass: HomeAssistant, entry: BirdNetConfigEntry) -> None:
-        """Initialise le collecteur."""
+        """Initialise the collector."""
         self.hass = hass
         self.entry = entry
         self.last_detection: Detection | None = None
         self.detections: list[Detection] = []
         self.last_error: str | None = None
         self.messages_received = 0
+        self.duplicates_ignored = 0
+        self._seen: set[str] = set()
         self._listeners: list[Callable[[], None]] = []
         self._unsubs: list[Callable[[], None]] = []
         self._store: Store[dict[str, Any]] = Store(
@@ -56,14 +58,14 @@ class BirdNetCoordinator:
     # ------------------------------------------------------------------
     @property
     def topic(self) -> str:
-        """Topic MQTT écouté."""
+        """MQTT topic being listened to."""
         return self.entry.options.get(
             CONF_TOPIC, self.entry.data.get(CONF_TOPIC, DEFAULT_TOPIC)
         )
 
     @property
     def min_confidence(self) -> float:
-        """Confiance minimale, en pourcentage."""
+        """Minimum confidence, as a percentage."""
         return float(
             self.entry.options.get(
                 CONF_MIN_CONFIDENCE,
@@ -73,7 +75,7 @@ class BirdNetCoordinator:
 
     @property
     def excluded_species(self) -> list[str]:
-        """Espèces ignorées (comparaison insensible à la casse)."""
+        """Ignored species (case-insensitive comparison)."""
         raw = self.entry.options.get(
             CONF_EXCLUDED_SPECIES, self.entry.data.get(CONF_EXCLUDED_SPECIES, [])
         )
@@ -83,16 +85,16 @@ class BirdNetCoordinator:
 
     @property
     def max_detections(self) -> int:
-        """Nombre maximal de détections conservées pour la journée."""
+        """Maximum number of detections kept for the day."""
         return int(
             self.entry.options.get(CONF_MAX_DETECTIONS, DEFAULT_MAX_DETECTIONS)
         )
 
     # ------------------------------------------------------------------
-    # Cycle de vie
+    # Lifecycle
     # ------------------------------------------------------------------
     async def async_setup(self) -> None:
-        """Charge l'historique, s'abonne au topic et programme le reset."""
+        """Load the history, subscribe to the topic and schedule the reset."""
         await self._async_load()
 
         self._unsubs.append(
@@ -105,10 +107,10 @@ class BirdNetCoordinator:
                 self.hass, self._handle_midnight, hour=0, minute=0, second=0
             )
         )
-        _LOGGER.debug("Abonné au topic BirdNET %s", self.topic)
+        _LOGGER.debug("Subscribed to BirdNET topic %s", self.topic)
 
     async def async_shutdown(self) -> None:
-        """Coupe les abonnements et sauvegarde l'état."""
+        """Cancel the subscriptions and save the state."""
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
@@ -116,7 +118,7 @@ class BirdNetCoordinator:
 
     @callback
     def async_add_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
-        """Enregistre une entité à notifier à chaque changement."""
+        """Register an entity to notify on every change."""
         self._listeners.append(listener)
 
         @callback
@@ -131,7 +133,7 @@ class BirdNetCoordinator:
             listener()
 
     # ------------------------------------------------------------------
-    # Persistance
+    # Persistence
     # ------------------------------------------------------------------
     async def _async_load(self) -> None:
         data = await self._store.async_load()
@@ -145,6 +147,7 @@ class BirdNetCoordinator:
             and detection.detected_at >= today
         ]
         self.detections = restored[-self.max_detections :]
+        self._seen = {self._dedup_key(item) for item in self.detections}
         if last := data.get("last_detection"):
             self.last_detection = Detection.from_store(last)
 
@@ -165,7 +168,7 @@ class BirdNetCoordinator:
     # ------------------------------------------------------------------
     @callback
     def _handle_message(self, msg: mqtt.ReceiveMessage) -> None:
-        """Traite un message reçu sur le topic BirdNET."""
+        """Handle a message received on the BirdNET topic."""
         self.messages_received += 1
         payload = msg.payload
         if isinstance(payload, bytes):
@@ -177,18 +180,18 @@ class BirdNetCoordinator:
         try:
             data = json.loads(payload)
         except ValueError:
-            # Certaines configurations publient simplement le nom de l'espèce.
+            # Some setups simply publish the species name.
             data = {"common_name": payload}
 
         if not isinstance(data, dict):
-            self.last_error = f"Payload inattendu sur {msg.topic}"
-            _LOGGER.warning("%s : %s", self.last_error, payload[:200])
+            self.last_error = f"Unexpected payload on {msg.topic}"
+            _LOGGER.warning("%s: %s", self.last_error, payload[:200])
             return
 
         detection = Detection.from_payload(data)
         if detection is None:
-            self.last_error = f"Aucune espèce trouvée dans le payload de {msg.topic}"
-            _LOGGER.warning("%s : %s", self.last_error, payload[:200])
+            self.last_error = f"No species found in the payload from {msg.topic}"
+            _LOGGER.warning("%s: %s", self.last_error, payload[:200])
             return
 
         self.last_error = None
@@ -198,7 +201,7 @@ class BirdNetCoordinator:
             (detection.scientific_name or "").lower(),
         }
         if names & set(self.excluded_species):
-            _LOGGER.debug("Détection ignorée (exclusion) : %s", detection.common_name)
+            _LOGGER.debug("Detection ignored (excluded): %s", detection.common_name)
             return
 
         if (
@@ -206,7 +209,7 @@ class BirdNetCoordinator:
             and detection.confidence * 100 < self.min_confidence
         ):
             _LOGGER.debug(
-                "Détection ignorée (%s %.0f%% < %.0f%%)",
+                "Detection ignored (%s %.0f%% < %.0f%%)",
                 detection.common_name,
                 detection.confidence * 100,
                 self.min_confidence,
@@ -215,42 +218,65 @@ class BirdNetCoordinator:
 
         self.async_add_detection(detection)
 
+    @staticmethod
+    def _dedup_key(detection: Detection) -> str:
+        """Identity of a detection, for the duplicate check."""
+        return f"{detection.detected_at.isoformat()}|{detection.common_name.lower()}"
+
     @callback
     def async_add_detection(self, detection: Detection) -> None:
-        """Ajoute une détection retenue et prévient les entités."""
+        """Store an accepted detection and notify the entities."""
+        # BirdNET analyses overlapping windows, so the same detection can be
+        # published several times with the exact same timestamp. Counting it
+        # twice would inflate the daily figures. Timestamps have a one second
+        # resolution, and one species cannot be heard twice within one second.
+        key = self._dedup_key(detection)
+        if key in self._seen:
+            self.duplicates_ignored += 1
+            _LOGGER.debug(
+                "Duplicate ignored: %s at %s",
+                detection.common_name,
+                detection.detected_at,
+            )
+            return
+
         if detection.detected_at < dt_util.start_of_local_day():
-            # Détection de la veille (message retenu au démarrage) : on garde
-            # la dernière connue sans polluer le journal du jour.
+            # Yesterday's detection (a retained message picked up at startup):
+            # keep it as the last known one without polluting today's log.
             self.last_detection = self.last_detection or detection
             self._notify()
             return
 
         self.last_detection = detection
         self.detections.append(detection)
+        self._seen.add(key)
         if len(self.detections) > self.max_detections:
-            del self.detections[: len(self.detections) - self.max_detections]
+            dropped = self.detections[: len(self.detections) - self.max_detections]
+            del self.detections[: len(dropped)]
+            self._seen.difference_update(self._dedup_key(item) for item in dropped)
 
         self._store.async_delay_save(self._data_to_save, 30)
         self._notify()
 
     @callback
     def _handle_midnight(self, _now: Any) -> None:
-        """Vide le journal quotidien à minuit."""
+        """Clear the daily log at midnight."""
         self.async_clear_log()
 
     @callback
     def async_clear_log(self) -> None:
-        """Vide le journal du jour sans toucher à la dernière détection."""
+        """Clear today's log without touching the latest detection."""
         self.detections = []
+        self._seen.clear()
         self._store.async_delay_save(self._data_to_save, 5)
         self._notify()
 
     # ------------------------------------------------------------------
-    # Agrégats
+    # Aggregates
     # ------------------------------------------------------------------
     @callback
     def species_summary(self) -> list[dict[str, Any]]:
-        """Résumé par espèce, la plus récemment entendue en premier."""
+        """Per-species summary, most recently heard first."""
         summary: dict[str, dict[str, Any]] = {}
         for detection in self.detections:
             key = detection.common_name.lower()
@@ -273,8 +299,8 @@ class BirdNetCoordinator:
                 entry["max_confidence"] is None or confidence > entry["max_confidence"]
             ):
                 entry["max_confidence"] = confidence
-            # Un message sans nom latin ne doit pas priver l'espèce du sien pour
-            # le reste de la journée.
+            # One message without a scientific name must not deprive the species
+            # of its own for the rest of the day.
             if detection.scientific_name and not entry["scientific_name"]:
                 entry["scientific_name"] = detection.scientific_name
             if detection.detected_at.isoformat() >= entry["last_timestamp"]:
@@ -291,19 +317,19 @@ class BirdNetCoordinator:
 
     @callback
     def detections_as_dicts(self) -> list[dict[str, Any]]:
-        """Journal du jour, du plus récent au plus ancien."""
+        """Today's log, most recent first."""
         return [self.detection_as_dict(item) for item in reversed(self.detections)]
 
     # ------------------------------------------------------------------
-    # Extraits audio
+    # Audio clips
     # ------------------------------------------------------------------
     @callback
     def clip_proxy_url(self, url: str | None) -> str | None:
-        """URL locale équivalente, servie par Home Assistant.
+        """Equivalent local URL, served by Home Assistant.
 
-        Indispensable dès que Home Assistant est joint en HTTPS ou depuis
-        l'extérieur : l'adresse privée de BirdNET n'est alors pas atteignable
-        par le navigateur.
+        Required as soon as Home Assistant is reached over HTTPS or from
+        outside: the private address of BirdNET is then not reachable by the
+        browser.
         """
         if not url:
             return None
@@ -313,7 +339,7 @@ class BirdNetCoordinator:
 
     @callback
     def detection_as_dict(self, detection: Detection) -> dict[str, Any]:
-        """Détection exposée aux entités, extrait audio relayé compris."""
+        """Detection exposed to the entities, relayed audio clip included."""
         data = detection.as_dict()
         if proxied := self.clip_proxy_url(detection.audio_url):
             data["audio"] = proxied

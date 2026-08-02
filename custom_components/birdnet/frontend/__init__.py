@@ -1,9 +1,9 @@
-"""Enregistrement de la carte Lovelace livrée avec l'intégration.
+"""Registration of the Lovelace card shipped with the integration.
 
-Structure et séquence reprises du guide HACF « Carte Lovelace embarquée dans une
-intégration Home Assistant » : chemin statique toujours enregistré, ressource
-ajoutée uniquement en mode stockage, et attente du chargement des ressources
-Lovelace avant d'y toucher.
+Structure and sequence taken from KipK's developer guide on embedding a Lovelace
+card in a Home Assistant integration (https://forum.hacf.fr/t/74074): the static
+path is always registered, the resource is only added in storage mode, and the
+Lovelace resources are given time to load before being touched.
 """
 
 from __future__ import annotations
@@ -25,27 +25,27 @@ MAX_ATTEMPTS = 12
 
 
 class JSModuleRegistration:
-    """Publie les modules JavaScript de l'intégration."""
+    """Publishes the JavaScript modules of the integration."""
 
     def __init__(self, hass: HomeAssistant) -> None:
-        """Initialise le registraire."""
+        """Initialise the registrar."""
         self.hass = hass
         self.lovelace = hass.data.get("lovelace")
 
     @property
     def _mode(self) -> str:
-        """Mode de Lovelace : storage ou yaml."""
+        """Lovelace mode: storage or yaml."""
         return getattr(
             self.lovelace, "mode", getattr(self.lovelace, "resource_mode", "yaml")
         )
 
     async def async_register(self) -> None:
-        """Sert les fichiers puis référence les modules dans Lovelace."""
+        """Serve the files, then reference the modules in Lovelace."""
         await self._async_register_path()
 
         if self._mode != "storage":
             _LOGGER.info(
-                "Lovelace en mode YAML : ajoutez la ressource à la main -> "
+                "Lovelace in YAML mode: add the resource by hand -> "
                 "url: %s/%s , type: module",
                 URL_BASE,
                 CARD_FILENAME,
@@ -55,17 +55,17 @@ class JSModuleRegistration:
         await self._async_wait_for_lovelace_resources()
 
     async def _async_register_path(self) -> None:
-        """Enregistre le chemin HTTP statique servant le dossier frontend."""
+        """Register the static HTTP path serving the frontend folder."""
         try:
             await self.hass.http.async_register_static_paths(
                 [StaticPathConfig(URL_BASE, str(Path(__file__).parent), False)]
             )
-            _LOGGER.debug("Chemin enregistré : %s", URL_BASE)
+            _LOGGER.debug("Path registered: %s", URL_BASE)
         except (RuntimeError, ValueError):
-            _LOGGER.debug("Chemin déjà enregistré : %s", URL_BASE)
+            _LOGGER.debug("Path already registered: %s", URL_BASE)
 
     async def _async_wait_for_lovelace_resources(self) -> None:
-        """Attend que la collection de ressources soit chargée."""
+        """Wait for the resource collection to be loaded."""
         attempts = 0
 
         async def _check_loaded(_now: Any) -> None:
@@ -76,22 +76,22 @@ class JSModuleRegistration:
             attempts += 1
             if attempts >= MAX_ATTEMPTS:
                 _LOGGER.warning(
-                    "Ressources Lovelace toujours indisponibles : ajoutez la "
-                    "ressource à la main (%s/%s, type module)",
+                    "Lovelace resources still unavailable: add the resource by "
+                    "hand (%s/%s, type module)",
                     URL_BASE,
                     CARD_FILENAME,
                 )
                 return
-            _LOGGER.debug("Ressources Lovelace non chargées, nouvel essai dans %ss", RETRY_DELAY)
+            _LOGGER.debug("Lovelace resources not loaded, retrying in %ss", RETRY_DELAY)
             async_call_later(self.hass, RETRY_DELAY, _check_loaded)
 
         await _check_loaded(0)
 
     async def _async_register_modules(self) -> None:
-        """Crée la ressource si elle manque, sans paramètre de version.
+        """Create the resource when missing, without a version parameter.
 
-        Un `?v=` dans l'URL ne règle de toute façon pas le cache de l'app
-        mobile : c'est la commande websocket `birdnet/version` qui s'en charge.
+        A `?v=` in the URL does not fix the companion app cache anyway: the
+        `birdnet/version` websocket command takes care of that.
         """
         existing = [
             resource
@@ -108,21 +108,21 @@ class JSModuleRegistration:
                     continue
                 registered = True
                 if resource["url"] != url:
-                    # Nettoie un ?v= hérité d'une version précédente.
-                    _LOGGER.info("Ressource %s : suppression du suffixe de version", url)
+                    # Clean up a `?v=` inherited from an earlier version.
+                    _LOGGER.info("Resource %s: dropping the version suffix", url)
                     await self.lovelace.resources.async_update_item(
                         resource["id"], {"res_type": "module", "url": url}
                     )
                 break
 
             if not registered:
-                _LOGGER.info("Enregistrement de %s (%s)", module["name"], url)
+                _LOGGER.info("Registering %s (%s)", module["name"], url)
                 await self.lovelace.resources.async_create_item(
                     {"res_type": "module", "url": url}
                 )
 
     async def async_unregister(self) -> None:
-        """Retire les ressources lors de la suppression de l'intégration."""
+        """Remove the resources when the integration is deleted."""
         if self._mode != "storage":
             return
         for module in JSMODULES:
@@ -136,5 +136,5 @@ class JSModuleRegistration:
 
     @staticmethod
     def _get_path(url: str) -> str:
-        """Chemin sans les paramètres de requête."""
+        """Path without the query parameters."""
         return url.split("?")[0]

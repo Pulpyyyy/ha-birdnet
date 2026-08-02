@@ -1,4 +1,4 @@
-"""Entité événement : point d'entrée idéal pour les automatisations."""
+"""Event entity: the natural entry point for automations."""
 
 from __future__ import annotations
 
@@ -17,31 +17,31 @@ async def async_setup_entry(
     entry: BirdNetConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Ajoute l'entité événement."""
+    """Add the event entity."""
     async_add_entities([BirdNetDetectionEvent(entry.runtime_data)])
 
 
 class BirdNetDetectionEvent(BirdNetEntity, EventEntity):
-    """Se déclenche à chaque nouvelle détection retenue."""
+    """Fires on every accepted detection."""
 
     _attr_icon = "mdi:bird"
     _attr_event_types = [EVENT_DETECTION]
 
     def __init__(self, coordinator: BirdNetCoordinator) -> None:
-        """Initialise l'entité événement."""
+        """Initialise the event entity."""
         super().__init__(coordinator, "detection")
         self._last_key: str | None = self._detection_key()
 
     @callback
     def _detection_key(self) -> str | None:
-        """Identifiant de la dernière détection, pour éviter les doublons."""
+        """Identifier of the latest detection, used to avoid duplicates."""
         if (detection := self.coordinator.last_detection) is None:
             return None
         return f"{detection.detected_at.isoformat()}|{detection.common_name}"
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        """Déclenche l'événement uniquement sur une détection inédite."""
+        """Fire the event only for a detection not seen before."""
         key = self._detection_key()
         if key is None or key == self._last_key:
             return

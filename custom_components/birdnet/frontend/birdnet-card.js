@@ -4,7 +4,7 @@
  * any template sensor exposing common_name / image / bird_events.
  */
 
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.0.1";
 
 console.info(`%c 🙂 BirdNET Card %c v${CARD_VERSION} %c`, "background:#2196F3;color:white;padding:2px 8px;border-radius:3px 0 0 3px;font-weight:bold", "background:#4CAF50;color:white;padding:2px 8px;border-radius:0 3px 3px 0", "background:none");
 
@@ -45,6 +45,7 @@ const STRINGS = {
     options: {
       hero: "Large picture",
       compact: "Compact thumbnail",
+      minimal: "Single band, no log",
       confidence: "Confidence (%)",
       count: "Number of detections",
       sortAuto: "Follow the highlight",
@@ -94,6 +95,7 @@ const STRINGS = {
     options: {
       hero: "Grande photo",
       compact: "Vignette compacte",
+      minimal: "Bande unique, sans journal",
       confidence: "La fiabilité (%)",
       count: "Le nombre de détections",
       sortAuto: "Suivre la mise en valeur",
@@ -143,6 +145,7 @@ const STRINGS = {
     options: {
       hero: "Großes Bild",
       compact: "Kompaktes Vorschaubild",
+      minimal: "Einzelne Leiste, ohne Protokoll",
       confidence: "Zuverlässigkeit (%)",
       count: "Anzahl der Erkennungen",
       sortAuto: "Der Hervorhebung folgen",
@@ -192,6 +195,7 @@ const STRINGS = {
     options: {
       hero: "Foto grande",
       compact: "Miniatura compacta",
+      minimal: "Banda única, sin registro",
       confidence: "La fiabilidad (%)",
       count: "El número de detecciones",
       sortAuto: "Seguir el elemento destacado",
@@ -241,6 +245,7 @@ const STRINGS = {
     options: {
       hero: "Foto grande",
       compact: "Miniatura compatta",
+      minimal: "Banda singola, senza registro",
       confidence: "L'affidabilità (%)",
       count: "Il numero di rilevamenti",
       sortAuto: "Segui l'evidenziazione",
@@ -263,7 +268,7 @@ const localize = (hass) => {
 
 const DEFAULTS = {
   title: "",
-  layout: "hero", // hero | compact
+  layout: "hero", // hero | compact | minimal (compact without the log)
   show_image: true,
   show_chips: true, // scientific name + confidence pill
   show_log: true,
@@ -366,9 +371,17 @@ class BirdNetCard extends HTMLElement {
 
   getCardSize() {
     const config = this._config || DEFAULTS;
-    const media = config.show_image ? (config.layout === "compact" ? 1 : 3) : 1;
-    const rows = config.show_log ? Math.ceil((Number(config.max_rows) || 10) / 2) : 0;
+    const media =
+      config.show_image && config.layout === "hero" ? 3 : 1;
+    const rows = this._showsLog(config)
+      ? Math.ceil((Number(config.max_rows) || 10) / 2)
+      : 0;
     return media + 1 + rows;
+  }
+
+  /** The minimal layout is the compact strip on its own. */
+  _showsLog(config) {
+    return config.show_log && config.layout !== "minimal";
   }
 
   get _t() {
@@ -559,7 +572,7 @@ class BirdNetCard extends HTMLElement {
     parts.push(
       this._renderHeader({ name, scientific, confidence, time, image, audio, t })
     );
-    if (config.show_log) {
+    if (this._showsLog(config)) {
       parts.push(this._renderLog({ visibleRows, speciesCount, detectionCount, t }));
     }
 
@@ -604,7 +617,7 @@ class BirdNetCard extends HTMLElement {
       : "";
 
     // Large picture: the title sits on a scrim, so no vertical space is wasted.
-    if (image && config.layout !== "compact") {
+    if (image && config.layout === "hero") {
       return `
         <div class="hero" data-action="primary" role="button" tabindex="0">
           <img class="hero__img" src="${esc(image)}" alt="${label}" loading="lazy" />
@@ -1174,6 +1187,7 @@ const buildSchema = (t) => [
             options: [
               { value: "hero", label: t.options.hero },
               { value: "compact", label: t.options.compact },
+              { value: "minimal", label: t.options.minimal },
             ],
           },
         },
