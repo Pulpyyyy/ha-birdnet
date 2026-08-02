@@ -39,6 +39,7 @@ const STRINGS = {
       log_min_confidence: "Log threshold (%)",
       aspect_ratio: "Picture aspect ratio",
       emphasis: "Highlight in the log",
+      sort: "Log order",
       tap_action: "Tap action",
     },
     options: {
@@ -46,6 +47,10 @@ const STRINGS = {
       compact: "Compact thumbnail",
       confidence: "Confidence (%)",
       count: "Number of detections",
+      sortAuto: "Follow the highlight",
+      sortTime: "Most recent first",
+      sortCount: "Most detections first",
+      sortConfidence: "Highest confidence first",
       url: "Open the BirdNET link",
       wikipedia: "Open the Wikipedia page",
       moreInfo: "Entity details",
@@ -83,6 +88,7 @@ const STRINGS = {
       log_min_confidence: "Seuil du journal (%)",
       aspect_ratio: "Format de la photo",
       emphasis: "Mettre en valeur dans le journal",
+      sort: "Tri du journal",
       tap_action: "Action au clic",
     },
     options: {
@@ -90,6 +96,10 @@ const STRINGS = {
       compact: "Vignette compacte",
       confidence: "La fiabilité (%)",
       count: "Le nombre de détections",
+      sortAuto: "Suivre la mise en valeur",
+      sortTime: "Plus récent en premier",
+      sortCount: "Plus de détections en premier",
+      sortConfidence: "Meilleure fiabilité en premier",
       url: "Ouvrir le lien BirdNET",
       wikipedia: "Ouvrir la fiche Wikipédia",
       moreInfo: "Fiche de l'entité",
@@ -127,6 +137,7 @@ const STRINGS = {
       log_min_confidence: "Schwelle für das Protokoll (%)",
       aspect_ratio: "Seitenverhältnis des Bildes",
       emphasis: "Im Protokoll hervorheben",
+      sort: "Sortierung des Protokolls",
       tap_action: "Aktion beim Tippen",
     },
     options: {
@@ -134,6 +145,10 @@ const STRINGS = {
       compact: "Kompaktes Vorschaubild",
       confidence: "Zuverlässigkeit (%)",
       count: "Anzahl der Erkennungen",
+      sortAuto: "Der Hervorhebung folgen",
+      sortTime: "Neueste zuerst",
+      sortCount: "Meiste Erkennungen zuerst",
+      sortConfidence: "Höchste Zuverlässigkeit zuerst",
       url: "BirdNET-Link öffnen",
       wikipedia: "Wikipedia-Seite öffnen",
       moreInfo: "Entitätsdetails",
@@ -171,6 +186,7 @@ const STRINGS = {
       log_min_confidence: "Umbral del registro (%)",
       aspect_ratio: "Formato de la foto",
       emphasis: "Destacar en el registro",
+      sort: "Orden del registro",
       tap_action: "Acción al pulsar",
     },
     options: {
@@ -178,6 +194,10 @@ const STRINGS = {
       compact: "Miniatura compacta",
       confidence: "La fiabilidad (%)",
       count: "El número de detecciones",
+      sortAuto: "Seguir el elemento destacado",
+      sortTime: "Más reciente primero",
+      sortCount: "Más detecciones primero",
+      sortConfidence: "Mayor fiabilidad primero",
       url: "Abrir el enlace de BirdNET",
       wikipedia: "Abrir la página de Wikipedia",
       moreInfo: "Detalles de la entidad",
@@ -215,6 +235,7 @@ const STRINGS = {
       log_min_confidence: "Soglia del registro (%)",
       aspect_ratio: "Formato della foto",
       emphasis: "Evidenzia nel registro",
+      sort: "Ordine del registro",
       tap_action: "Azione al tocco",
     },
     options: {
@@ -222,6 +243,10 @@ const STRINGS = {
       compact: "Miniatura compatta",
       confidence: "L'affidabilità (%)",
       count: "Il numero di rilevamenti",
+      sortAuto: "Segui l'evidenziazione",
+      sortTime: "Più recente prima",
+      sortCount: "Più rilevamenti prima",
+      sortConfidence: "Maggiore affidabilità prima",
       url: "Apri il collegamento BirdNET",
       wikipedia: "Apri la pagina di Wikipedia",
       moreInfo: "Dettagli dell'entità",
@@ -248,6 +273,7 @@ const DEFAULTS = {
   max_rows: 10,
   aspect_ratio: "16:9",
   emphasis: "confidence", // confidence | count
+  sort: "auto", // auto (follows emphasis) | time | count | confidence
   wikipedia: true,
   wikipedia_language: "",
   tap_action: "url", // url | wikipedia | more-info | none
@@ -630,11 +656,28 @@ class BirdNetCard extends HTMLElement {
     // the emphasis option; the other figure stays readable, just quieter.
     const byCount = config.emphasis === "count";
     const maxCount = Math.max(...visibleRows.map((row) => row.count), 1);
-    const ordered = byCount
-      ? [...visibleRows].sort(
-          (a, b) => b.count - a.count || b.time.localeCompare(a.time)
-        )
-      : visibleRows;
+
+    // Highlighting and ordering are two separate decisions: `auto` ties them
+    // together, anything else pins the order whatever is highlighted.
+    const sort =
+      !config.sort || config.sort === "auto"
+        ? byCount
+          ? "count"
+          : "time"
+        : config.sort;
+    // Rows already arrive most recent first, so "time" needs no work.
+    const ordered =
+      sort === "count"
+        ? [...visibleRows].sort(
+            (a, b) => b.count - a.count || b.time.localeCompare(a.time)
+          )
+        : sort === "confidence"
+          ? [...visibleRows].sort(
+              (a, b) =>
+                (b.confidence ?? -1) - (a.confidence ?? -1) ||
+                b.time.localeCompare(a.time)
+            )
+          : visibleRows;
 
     const rows = ordered
       .map((row) => {
@@ -1171,6 +1214,20 @@ const buildSchema = (t) => [
         options: [
           { value: "confidence", label: t.options.confidence },
           { value: "count", label: t.options.count },
+        ],
+      },
+    },
+  },
+  {
+    name: "sort",
+    selector: {
+      select: {
+        mode: "dropdown",
+        options: [
+          { value: "auto", label: t.options.sortAuto },
+          { value: "time", label: t.options.sortTime },
+          { value: "count", label: t.options.sortCount },
+          { value: "confidence", label: t.options.sortConfidence },
         ],
       },
     },

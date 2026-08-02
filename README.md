@@ -133,6 +133,7 @@ show_footer: true            # totals (species / detections)
 log_min_confidence: 70       # display threshold for the log
 max_rows: 10                 # log rows
 emphasis: confidence         # confidence | count: what the log highlights
+sort: auto                   # auto | time | count | confidence: log order
 wikipedia: true              # species names link to Wikipedia
 wikipedia_language: en       # defaults to the user's language
 tap_action: url              # url | wikipedia | more-info | none
@@ -140,8 +141,13 @@ tap_action: url              # url | wikipedia | more-info | none
 
 `emphasis` switches the bold figure on the right and the gauge: `confidence`
 highlights the best confidence for the species, `count` its number of detections
-(the gauge then becomes relative to the most heard species, and the log is
-sorted by descending count). The other figure stays visible, just quieter.
+(the gauge is then relative to the most heard species). The other figure stays
+visible, just quieter.
+
+`sort` is a separate decision. `auto` ties the order to the highlight — most
+recent first, or most detections first in `count` mode. `time`, `count` and
+`confidence` pin the order whatever is highlighted, so you can put the detection
+count forward while keeping a chronological log.
 
 `tap_action: url` opens the BirdNET link from the MQTT message, falling back to
 Wikipedia when it is missing; `wikipedia` always goes to Wikipedia.
