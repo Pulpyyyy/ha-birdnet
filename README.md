@@ -55,6 +55,11 @@ lovelace:
 Already running a trigger-based template sensor from a community tutorial? See
 [MIGRATION.md](MIGRATION.md).
 
+The integration icon is served from
+[`custom_components/birdnet/brand/`](custom_components/birdnet/brand/). Home
+Assistant reads that folder from **2026.3** onwards; below that version the
+integrations page falls back to the brands CDN and shows a placeholder.
+
 ## Configuration
 
 When adding the integration:
