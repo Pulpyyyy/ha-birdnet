@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from typing import Any
 
 from homeassistant.config_entries import (
@@ -15,6 +16,7 @@ from homeassistant.helpers import selector
 import voluptuous as vol
 
 from .const import (
+    CONF_CLIP_SECRET,
     CONF_EXCLUDED_SPECIES,
     CONF_MAX_DETECTIONS,
     CONF_MIN_CONFIDENCE,
@@ -66,7 +68,11 @@ class BirdNetConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title=DEFAULT_NAME,
-                    data={CONF_TOPIC: topic},
+                    data={
+                        CONF_TOPIC: topic,
+                        # Signe les URLs des extraits relayés par la vue HTTP.
+                        CONF_CLIP_SECRET: secrets.token_hex(32),
+                    },
                     options={
                         CONF_TOPIC: topic,
                         CONF_MIN_CONFIDENCE: user_input[CONF_MIN_CONFIDENCE],

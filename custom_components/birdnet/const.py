@@ -19,7 +19,8 @@ CONF_TOPIC: Final = "topic"
 CONF_MIN_CONFIDENCE: Final = "min_confidence"
 CONF_EXCLUDED_SPECIES: Final = "excluded_species"
 CONF_MAX_DETECTIONS: Final = "max_detections"
-CONF_BASE_URL: Final = "base_url"
+# Secret propre à l'entrée, utilisé pour signer les URLs d'extraits relayés.
+CONF_CLIP_SECRET: Final = "clip_secret"
 
 DEFAULT_TOPIC: Final = "birdnet/detection"
 DEFAULT_MIN_CONFIDENCE: Final = 70

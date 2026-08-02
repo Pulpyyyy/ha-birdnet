@@ -110,6 +110,25 @@ When the link carries a `?filename=xxx.mp3` query, the BirdNET-Pi audio clip URL
 is rebuilt (`/By_Date/<date>/<Species>/<file>`) and exposed as the `audio`
 attribute — the card then shows a play button.
 
+### Audio clips are relayed by Home Assistant
+
+BirdNET is usually reachable over plain `http://` on a private address. A browser
+would refuse to load that clip: unreachable from outside your network, and
+blocked as mixed content when Home Assistant itself is served over HTTPS.
+
+So the `audio` attribute does not point at BirdNET directly. It points at Home
+Assistant, which fetches the clip on the browser's behalf and returns it on its
+own origin — playback works the same at home, from outside and behind HTTPS. The
+original address stays available as `audio_source`.
+
+The relay only accepts URLs signed with a secret held by the config entry, so it
+cannot be used to probe your network. Those links do not expire on their own;
+anyone who gets hold of one can replay that clip.
+
+Note that the BirdNET web page in the `link` attribute is **not** relayed — it is
+a whole web interface, not a file. Opening it from outside your network will not
+work; use `tap_action: wikipedia` on the card if that is your usual situation.
+
 ## The card
 
 ```yaml

@@ -15,6 +15,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    CONF_CLIP_SECRET,
     CONF_EXCLUDED_SPECIES,
     CONF_MAX_DETECTIONS,
     CONF_MIN_CONFIDENCE,
@@ -25,6 +26,7 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
+from .http import clip_path
 from .models import Detection
 
 _LOGGER = logging.getLogger(__name__)
@@ -290,4 +292,30 @@ class BirdNetCoordinator:
     @callback
     def detections_as_dicts(self) -> list[dict[str, Any]]:
         """Journal du jour, du plus récent au plus ancien."""
-        return [item.as_dict() for item in reversed(self.detections)]
+        return [self.detection_as_dict(item) for item in reversed(self.detections)]
+
+    # ------------------------------------------------------------------
+    # Extraits audio
+    # ------------------------------------------------------------------
+    @callback
+    def clip_proxy_url(self, url: str | None) -> str | None:
+        """URL locale équivalente, servie par Home Assistant.
+
+        Indispensable dès que Home Assistant est joint en HTTPS ou depuis
+        l'extérieur : l'adresse privée de BirdNET n'est alors pas atteignable
+        par le navigateur.
+        """
+        if not url:
+            return None
+        if not (secret := self.entry.data.get(CONF_CLIP_SECRET)):
+            return None
+        return clip_path(secret, self.entry.entry_id, url)
+
+    @callback
+    def detection_as_dict(self, detection: Detection) -> dict[str, Any]:
+        """Détection exposée aux entités, extrait audio relayé compris."""
+        data = detection.as_dict()
+        if proxied := self.clip_proxy_url(detection.audio_url):
+            data["audio"] = proxied
+            data["audio_source"] = detection.audio_url
+        return data

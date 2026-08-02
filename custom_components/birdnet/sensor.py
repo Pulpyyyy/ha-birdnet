@@ -81,20 +81,17 @@ class BirdNetLastDetectionSensor(BirdNetEntity, SensorEntity):
         }
 
         if (detection := coordinator.last_detection) is not None:
-            attributes |= {
-                "common_name": detection.common_name,
-                "scientific_name": detection.scientific_name,
-                "confidence": detection.confidence_pct,
-                "confidence_score": detection.confidence,
-                "time": detection.detected_at.strftime("%H:%M:%S"),
-                "date": detection.detected_at.strftime("%Y-%m-%d"),
-                "timestamp": detection.detected_at.isoformat(),
-                "image": detection.image_url,
-                "link": detection.link,
-                "audio": detection.audio_url,
+            latest = coordinator.detection_as_dict(detection) | {
                 "latitude": detection.latitude,
                 "longitude": detection.longitude,
-                "species_code": detection.species_code,
+            }
+            # « name » n'a de sens que dans les listes, pas à plat.
+            latest.pop("name", None)
+            # Un champ absent du payload (BirdNET-Pi n'envoie ni code d'espèce
+            # ni coordonnées) encombre la fiche pour rien : on ne publie que ce
+            # qui existe.
+            attributes |= {
+                key: value for key, value in latest.items() if value is not None
             }
         return attributes
 

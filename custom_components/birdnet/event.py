@@ -48,5 +48,7 @@ class BirdNetDetectionEvent(BirdNetEntity, EventEntity):
         self._last_key = key
         detection = self.coordinator.last_detection
         assert detection is not None
-        self._trigger_event(EVENT_DETECTION, detection.as_dict())
+        self._trigger_event(
+            EVENT_DETECTION, self.coordinator.detection_as_dict(detection)
+        )
         self.async_write_ha_state()

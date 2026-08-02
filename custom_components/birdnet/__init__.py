@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import secrets
 
 from homeassistant.components import mqtt, websocket_api
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
@@ -12,9 +13,10 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 import voluptuous as vol
 
-from .const import DOMAIN, INTEGRATION_VERSION
+from .const import CONF_CLIP_SECRET, DOMAIN, INTEGRATION_VERSION
 from .coordinator import BirdNetConfigEntry, BirdNetCoordinator
 from .frontend import JSModuleRegistration
+from .http import async_register_clip_view
 from .models import Detection
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,6 +77,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: BirdNetConfigEntry) -> b
     """Configure une instance BirdNET."""
     if not await mqtt.async_wait_for_mqtt_client(hass):
         raise ConfigEntryNotReady("Le client MQTT n'est pas disponible")
+
+    # Entrées créées avant l'arrivée du relais audio : on complète le secret.
+    # Aucun écouteur n'est encore branché ici, la mise à jour ne déclenche donc
+    # pas de rechargement.
+    if CONF_CLIP_SECRET not in entry.data:
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, CONF_CLIP_SECRET: secrets.token_hex(32)},
+        )
+    async_register_clip_view(hass)
 
     coordinator = BirdNetCoordinator(hass, entry)
     await coordinator.async_setup()
