@@ -143,9 +143,6 @@ sorted by descending count). The other figure stays visible, just quieter.
 `tap_action: url` opens the BirdNET link from the MQTT message, falling back to
 Wikipedia when it is missing; `wikipedia` always goes to Wikipedia.
 
-The card interface and its editor are translated into English, French, German,
-Spanish and Italian, following the Home Assistant user language.
-
 ### Design notes
 
 * **Picture as a backdrop, text on top.** Name, scientific name, time and
@@ -181,6 +178,13 @@ entity: sensor.birdnet_go_events
 So it works before you switch to the integration. Conversely,
 `sensor.birdnet_last_detection` exposes a `bird_events` attribute in the same
 shape, so an existing markdown card keeps working.
+
+## Languages
+
+Everything the user sees follows the Home Assistant user language, in **English,
+French, German, Spanish and Italian**: the setup and options dialogs, entity
+names, service names and descriptions, and the card together with its visual
+editor. Anything else falls back to English.
 
 ## Automation
 

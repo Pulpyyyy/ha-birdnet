@@ -140,9 +140,9 @@ class BirdNetLastDetectionTimeSensor(BirdNetEntity, SensorEntity):
 class BirdNetDetectionCountSensor(BirdNetEntity, SensorEntity):
     """Nombre de détections depuis minuit."""
 
+    # Pas d'unité : elle ne serait pas traduite et resterait en français.
     _attr_icon = "mdi:counter"
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = "détections"
 
     def __init__(self, coordinator: BirdNetCoordinator) -> None:
         """Initialise le compteur de détections."""
@@ -159,7 +159,6 @@ class BirdNetSpeciesCountSensor(BirdNetEntity, SensorEntity):
 
     _attr_icon = "mdi:format-list-bulleted"
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = "espèces"
 
     def __init__(self, coordinator: BirdNetCoordinator) -> None:
         """Initialise le compteur d'espèces."""

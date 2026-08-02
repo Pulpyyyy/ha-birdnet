@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET",
+        "description": "Indica il topic MQTT su cui BirdNET-Pi (Apprise) o BirdNET-Go pubblica i suoi rilevamenti.",
+        "data": {
+          "topic": "Topic MQTT",
+          "min_confidence": "Affidabilità minima",
+          "excluded_species": "Specie ignorate"
+        },
+        "data_description": {
+          "topic": "Ad esempio birdnet/detection",
+          "min_confidence": "I rilevamenti sotto questa soglia vengono scartati.",
+          "excluded_species": "Nome comune o scientifico, uno per voce (es. Umano, Rumore)."
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Topic MQTT non valido."
+    },
+    "abort": {
+      "already_configured": "Questo topic è già configurato."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni BirdNET",
+        "data": {
+          "topic": "Topic MQTT",
+          "min_confidence": "Affidabilità minima",
+          "excluded_species": "Specie ignorate",
+          "max_detections": "Rilevamenti conservati al giorno"
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Topic MQTT non valido."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Ultimo rilevamento" },
+      "confidence": { "name": "Affidabilità" },
+      "last_detection_time": { "name": "Ora del rilevamento" },
+      "detections_today": { "name": "Rilevamenti di oggi" },
+      "species_today": { "name": "Specie di oggi" },
+      "mqtt_topic": { "name": "Topic MQTT" }
+    },
+    "image": {
+      "last_detection": { "name": "Ultimo rilevamento" }
+    },
+    "event": {
+      "detection": {
+        "name": "Rilevamento",
+        "state_attributes": {
+          "event_type": {
+            "state": { "detection": "Rilevamento" }
+          }
+        }
+      }
+    }
+  },
+  "services": {
+    "clear_log": {
+      "name": "Svuota il registro del giorno",
+      "description": "Rimuove i rilevamenti accumulati dalla mezzanotte.",
+      "fields": {
+        "entry_id": {
+          "name": "Istanza",
+          "description": "Istanza BirdNET interessata (tutte per impostazione predefinita)."
+        }
+      }
+    },
+    "simulate_detection": {
+      "name": "Simula un rilevamento",
+      "description": "Inserisce un rilevamento fittizio, utile per provare la scheda.",
+      "fields": {
+        "common_name": { "name": "Nome comune", "description": "Es. Gazza" },
+        "scientific_name": { "name": "Nome scientifico", "description": "Es. Pica pica" },
+        "confidence": { "name": "Affidabilità", "description": "Tra 0 e 1." },
+        "image": { "name": "Immagine", "description": "URL della foto." },
+        "link": { "name": "Collegamento", "description": "URL di ascolto BirdNET." },
+        "entry_id": { "name": "Istanza", "description": "Istanza BirdNET interessata." }
+      }
+    }
+  }
+}

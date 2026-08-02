@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET",
+        "description": "Gib das MQTT-Topic an, auf dem BirdNET-Pi (Apprise) oder BirdNET-Go seine Erkennungen veröffentlicht.",
+        "data": {
+          "topic": "MQTT-Topic",
+          "min_confidence": "Mindestzuverlässigkeit",
+          "excluded_species": "Ignorierte Arten"
+        },
+        "data_description": {
+          "topic": "Zum Beispiel birdnet/detection",
+          "min_confidence": "Erkennungen unterhalb dieser Schwelle werden verworfen.",
+          "excluded_species": "Gebräuchlicher oder wissenschaftlicher Name, einer pro Eintrag (z. B. Mensch, Rauschen)."
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Ungültiges MQTT-Topic."
+    },
+    "abort": {
+      "already_configured": "Dieses Topic ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BirdNET-Optionen",
+        "data": {
+          "topic": "MQTT-Topic",
+          "min_confidence": "Mindestzuverlässigkeit",
+          "excluded_species": "Ignorierte Arten",
+          "max_detections": "Pro Tag gespeicherte Erkennungen"
+        }
+      }
+    },
+    "error": {
+      "invalid_topic": "Ungültiges MQTT-Topic."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Letzte Erkennung" },
+      "confidence": { "name": "Zuverlässigkeit" },
+      "last_detection_time": { "name": "Erkennungszeit" },
+      "detections_today": { "name": "Erkennungen heute" },
+      "species_today": { "name": "Arten heute" },
+      "mqtt_topic": { "name": "MQTT-Topic" }
+    },
+    "image": {
+      "last_detection": { "name": "Letzte Erkennung" }
+    },
+    "event": {
+      "detection": {
+        "name": "Erkennung",
+        "state_attributes": {
+          "event_type": {
+            "state": { "detection": "Erkennung" }
+          }
+        }
+      }
+    }
+  },
+  "services": {
+    "clear_log": {
+      "name": "Tagesprotokoll leeren",
+      "description": "Entfernt die seit Mitternacht gesammelten Erkennungen.",
+      "fields": {
+        "entry_id": {
+          "name": "Instanz",
+          "description": "Betroffene BirdNET-Instanz (standardmäßig alle)."
+        }
+      }
+    },
+    "simulate_detection": {
+      "name": "Erkennung simulieren",
+      "description": "Fügt eine Testerkennung ein, nützlich zum Prüfen der Karte.",
+      "fields": {
+        "common_name": { "name": "Gebräuchlicher Name", "description": "z. B. Elster" },
+        "scientific_name": { "name": "Wissenschaftlicher Name", "description": "z. B. Pica pica" },
+        "confidence": { "name": "Zuverlässigkeit", "description": "Zwischen 0 und 1." },
+        "image": { "name": "Bild", "description": "URL des Fotos." },
+        "link": { "name": "Link", "description": "BirdNET-Wiedergabelink." },
+        "entry_id": { "name": "Instanz", "description": "Betroffene BirdNET-Instanz." }
+      }
+    }
+  }
+}
