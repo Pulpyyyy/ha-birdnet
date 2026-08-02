@@ -129,10 +129,19 @@ show_log: true                # journal des espèces du jour
 show_footer: true             # totaux (espèces / détections)
 log_min_confidence: 70        # seuil d'affichage dans le journal
 max_rows: 10                  # lignes du journal
+emphasis: confidence          # confidence | count : ce que le journal met en avant
 wikipedia: true               # nom d'espèce cliquable vers Wikipédia
 wikipedia_language: fr        # par défaut : langue de l'utilisateur
-tap_action: url               # url | more-info | none
+tap_action: url               # url | wikipedia | more-info | none
 ```
+
+`emphasis` bascule la valeur en gras à droite et la jauge : `confidence` met en
+avant la meilleure fiabilité de l'espèce, `count` son nombre de détections (la
+jauge devient alors proportionnelle à l'espèce la plus entendue, et le journal
+est trié par nombre décroissant). L'autre valeur reste affichée, en retrait.
+
+`tap_action: url` ouvre le lien BirdNET du message MQTT, avec repli sur
+Wikipédia s'il est absent ; `wikipedia` va toujours sur Wikipédia.
 
 ### Parti pris de design
 

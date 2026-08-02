@@ -54,6 +54,7 @@ const DEFAULTS = {
   log_min_confidence: 70,
   max_rows: 10,
   aspect_ratio: "16:9",
+  emphasis: "confidence", // confidence | count
   wikipedia: true,
   wikipedia_language: "",
   tap_action: "url",
@@ -269,8 +270,8 @@ class BirdNetCard extends HTMLElement {
     return [...grouped.values()].sort((a, b) => b.time.localeCompare(a.time));
   }
 
-  _speciesUrl(name) {
-    if (!this._config.wikipedia || !name) return "";
+  _speciesUrl(name, force = false) {
+    if ((!this._config.wikipedia && !force) || !name) return "";
     const language =
       this._config.wikipedia_language ||
       (this._hass?.locale?.language || "en").slice(0, 2);
@@ -347,8 +348,13 @@ class BirdNetCard extends HTMLElement {
       );
     }
 
+    const target =
+      config.tap_action === "wikipedia"
+        ? this._speciesUrl(name, true)
+        : link || this._speciesUrl(name);
+
     this._paint(parts.join(""), image ? parseRatio(config.aspect_ratio) : null);
-    this._bindActions(link || this._speciesUrl(name), audio);
+    this._bindActions(target, audio);
   }
 
   _renderHeader({ name, scientific, confidence, time, image, audio, t }) {
@@ -431,28 +437,49 @@ class BirdNetCard extends HTMLElement {
       </div>`;
     }
 
-    const rows = visibleRows
+    // La colonne mise en avant (valeur en gras à droite + jauge) suit l'option
+    // emphasis ; l'autre information reste lisible, en retrait.
+    const byCount = config.emphasis === "count";
+    const maxCount = Math.max(...visibleRows.map((row) => row.count), 1);
+    const ordered = byCount
+      ? [...visibleRows].sort(
+          (a, b) => b.count - a.count || b.time.localeCompare(a.time)
+        )
+      : visibleRows;
+
+    const rows = ordered
       .map((row) => {
         const url = row.link || this._speciesUrl(row.name);
-        const level = confidenceLevel(row.confidence);
-        const value = row.confidence === null ? "—" : `${row.confidence}%`;
+        const confidenceText = row.confidence === null ? "—" : `${row.confidence}%`;
+        const ratio = row.count / maxCount;
+
+        const level = byCount
+          ? ratio >= 0.66
+            ? "high"
+            : ratio >= 0.33
+              ? "mid"
+              : "low"
+          : confidenceLevel(row.confidence);
+        const major = byCount ? `×${row.count}` : confidenceText;
+        const minor = byCount ? confidenceText : `×${row.count}`;
+        const width = byCount ? Math.round(ratio * 100) : row.confidence;
+
         const nameHtml = url
           ? `<a class="row__name" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(row.name)}</a>`
           : `<span class="row__name">${esc(row.name)}</span>`;
-        const count =
-          row.count > 1
-            ? `<span class="row__count" title="${esc(t.times(row.count))}">×${row.count}</span>`
-            : `<span class="row__count row__count--one">×1</span>`;
+        const minorClass =
+          !byCount && row.count === 1 ? "row__minor row__minor--faded" : "row__minor";
         const gauge =
-          row.confidence === null
+          width === null
             ? ""
-            : `<span class="gauge gauge--${level}"><i style="width:${row.confidence}%"></i></span>`;
+            : `<span class="gauge gauge--${level}"><i style="width:${width}%"></i></span>`;
+
         return `
           <li class="row">
             <span class="row__time">${esc(row.time || "—")}</span>
             ${nameHtml}
-            ${count}
-            <span class="row__conf conf--${level}">${esc(value)}</span>
+            <span class="${minorClass}">${esc(minor)}</span>
+            <span class="row__major conf--${level}" title="${esc(t.times(row.count))}">${esc(major)}</span>
             ${gauge}
           </li>`;
       })
@@ -810,14 +837,14 @@ class BirdNetCard extends HTMLElement {
         white-space: nowrap;
       }
       a.row__name:hover { text-decoration: underline; }
-      .row__count {
+      .row__minor {
         font-size: 12px;
         font-variant-numeric: tabular-nums;
         color: var(--secondary-text-color);
         white-space: nowrap;
       }
-      .row__count--one { opacity: 0.45; }
-      .row__conf {
+      .row__minor--faded { opacity: 0.45; }
+      .row__major {
         font-size: 13px;
         font-weight: 600;
         font-variant-numeric: tabular-nums;
@@ -874,7 +901,7 @@ class BirdNetCard extends HTMLElement {
       @container birdnet (max-width: 260px) {
         .log__head { flex-direction: column; align-items: flex-start; gap: 2px; }
         .log__stats { white-space: normal; }
-        .row__conf { min-width: 0; }
+        .row__major { min-width: 0; }
       }
       /* Carte large : on gagne de la hauteur en passant le journal sur deux
          colonnes, et l'entête respire. */
@@ -950,12 +977,25 @@ const EDITOR_SCHEMA = [
     ],
   },
   {
+    name: "emphasis",
+    selector: {
+      select: {
+        mode: "dropdown",
+        options: [
+          { value: "confidence", label: "La fiabilité (%)" },
+          { value: "count", label: "Le nombre de détections" },
+        ],
+      },
+    },
+  },
+  {
     name: "tap_action",
     selector: {
       select: {
         mode: "dropdown",
         options: [
           { value: "url", label: "Ouvrir le lien BirdNET" },
+          { value: "wikipedia", label: "Ouvrir la fiche Wikipédia" },
           { value: "more-info", label: "Fiche de l'entité" },
           { value: "none", label: "Aucune" },
         ],
@@ -978,6 +1018,7 @@ const EDITOR_LABELS = {
   max_rows: "Lignes affichées",
   log_min_confidence: "Seuil du journal (%)",
   aspect_ratio: "Format de la photo",
+  emphasis: "Mettre en valeur dans le journal",
   tap_action: "Action au clic",
 };
 
