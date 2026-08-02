@@ -15,6 +15,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    CONF_BASE_URL,
     CONF_CLIP_SECRET,
     CONF_EXCLUDED_SPECIES,
     CONF_MAX_DETECTIONS,
@@ -82,6 +83,14 @@ class BirdNetCoordinator:
         if isinstance(raw, str):
             raw = [part.strip() for part in raw.split(",")]
         return [item.lower() for item in raw if item]
+
+    @property
+    def base_url(self) -> str | None:
+        """Address of the BirdNET instance, without a trailing slash."""
+        raw = self.entry.options.get(
+            CONF_BASE_URL, self.entry.data.get(CONF_BASE_URL, "")
+        )
+        return str(raw).strip().rstrip("/") or None
 
     @property
     def max_detections(self) -> int:
@@ -338,10 +347,25 @@ class BirdNetCoordinator:
         return clip_path(secret, self.entry.entry_id, url)
 
     @callback
+    def audio_source(self, detection: Detection) -> str | None:
+        """Direct URL of the clip, whichever BirdNET published the detection.
+
+        BirdNET-Pi announces its own address in the listen link, from which the
+        clip path is rebuilt. BirdNET-Go publishes no address at all, but gives
+        a detection id: its API serves the clip at /api/v2/audio/<id>, so the
+        instance URL has to be configured.
+        """
+        if detection.detection_id and (base := self.base_url):
+            return f"{base}/api/v2/audio/{detection.detection_id}"
+        return detection.audio_url
+
+    @callback
     def detection_as_dict(self, detection: Detection) -> dict[str, Any]:
         """Detection exposed to the entities, relayed audio clip included."""
         data = detection.as_dict()
-        if proxied := self.clip_proxy_url(detection.audio_url):
+        source = self.audio_source(detection)
+        data["audio"] = source
+        if proxied := self.clip_proxy_url(source):
             data["audio"] = proxied
-            data["audio_source"] = detection.audio_url
+            data["audio_source"] = source
         return data

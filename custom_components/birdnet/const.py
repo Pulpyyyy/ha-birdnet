@@ -18,6 +18,10 @@ CONF_TOPIC: Final = "topic"
 CONF_MIN_CONFIDENCE: Final = "min_confidence"
 CONF_EXCLUDED_SPECIES: Final = "excluded_species"
 CONF_MAX_DETECTIONS: Final = "max_detections"
+# Address of the BirdNET instance. Only needed for BirdNET-Go, whose payload
+# carries no URL: the clip is then served by its API from the detection id.
+# BirdNET-Pi announces its own address in the listen link, so it ignores this.
+CONF_BASE_URL: Final = "base_url"
 # Per-entry secret, used to sign the URLs of relayed audio clips.
 CONF_CLIP_SECRET: Final = "clip_secret"
 

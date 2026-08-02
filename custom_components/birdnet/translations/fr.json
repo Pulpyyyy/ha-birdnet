@@ -7,17 +7,20 @@
         "data": {
           "topic": "Topic MQTT",
           "min_confidence": "Confiance minimale",
-          "excluded_species": "Espèces ignorées"
+          "excluded_species": "Espèces ignorées",
+          "base_url": "URL de BirdNET"
         },
         "data_description": {
           "topic": "Par exemple birdnet/detection",
           "min_confidence": "Les détections en dessous de ce seuil sont ignorées.",
-          "excluded_species": "Nom commun ou scientifique, un par entrée (ex. Humain, Bruit)."
+          "excluded_species": "Nom commun ou scientifique, un par entrée (ex. Humain, Bruit).",
+          "base_url": "Uniquement pour BirdNET-Go, qui ne publie aucune adresse : active l'écoute, par exemple http://192.168.1.10:8080. Laissez vide pour BirdNET-Pi."
         }
       }
     },
     "error": {
-      "invalid_topic": "Topic MQTT invalide."
+      "invalid_topic": "Topic MQTT invalide.",
+      "invalid_url": "URL invalide, elle doit commencer par http:// ou https://"
     },
     "abort": {
       "already_configured": "Ce topic est déjà configuré."
@@ -31,32 +34,53 @@
           "topic": "Topic MQTT",
           "min_confidence": "Confiance minimale",
           "excluded_species": "Espèces ignorées",
-          "max_detections": "Détections conservées par jour"
+          "max_detections": "Détections conservées par jour",
+          "base_url": "URL de BirdNET"
+        },
+        "data_description": {
+          "base_url": "Uniquement pour BirdNET-Go, qui ne publie aucune adresse : active l'écoute, par exemple http://192.168.1.10:8080. Laissez vide pour BirdNET-Pi."
         }
       }
     },
     "error": {
-      "invalid_topic": "Topic MQTT invalide."
+      "invalid_topic": "Topic MQTT invalide.",
+      "invalid_url": "URL invalide, elle doit commencer par http:// ou https://"
     }
   },
   "entity": {
     "sensor": {
-      "last_detection": { "name": "Dernière détection" },
-      "confidence": { "name": "Confiance" },
-      "last_detection_time": { "name": "Heure de détection" },
-      "detections_today": { "name": "Détections du jour" },
-      "species_today": { "name": "Espèces du jour" },
-      "mqtt_topic": { "name": "Topic MQTT" }
+      "last_detection": {
+        "name": "Dernière détection"
+      },
+      "confidence": {
+        "name": "Confiance"
+      },
+      "last_detection_time": {
+        "name": "Heure de détection"
+      },
+      "detections_today": {
+        "name": "Détections du jour"
+      },
+      "species_today": {
+        "name": "Espèces du jour"
+      },
+      "mqtt_topic": {
+        "name": "Topic MQTT"
+      }
     },
     "image": {
-      "last_detection": { "name": "Dernière détection" }
+      "last_detection": {
+        "name": "Dernière détection"
+      }
     },
     "event": {
       "detection": {
         "name": "Détection",
         "state_attributes": {
           "event_type": {
-            "state": { "detection": "Détection" }
+            "state": {
+              "detection": "Détection"
+            }
           }
         }
       }
@@ -77,12 +101,30 @@
       "name": "Simuler une détection",
       "description": "Injecte une détection factice, utile pour tester la carte.",
       "fields": {
-        "common_name": { "name": "Nom commun", "description": "Ex. Pie bavarde" },
-        "scientific_name": { "name": "Nom scientifique", "description": "Ex. Pica pica" },
-        "confidence": { "name": "Confiance", "description": "Entre 0 et 1." },
-        "image": { "name": "Image", "description": "URL de la photo." },
-        "link": { "name": "Lien", "description": "URL d'écoute BirdNET." },
-        "entry_id": { "name": "Instance", "description": "Instance BirdNET concernée." }
+        "common_name": {
+          "name": "Nom commun",
+          "description": "Ex. Pie bavarde"
+        },
+        "scientific_name": {
+          "name": "Nom scientifique",
+          "description": "Ex. Pica pica"
+        },
+        "confidence": {
+          "name": "Confiance",
+          "description": "Entre 0 et 1."
+        },
+        "image": {
+          "name": "Image",
+          "description": "URL de la photo."
+        },
+        "link": {
+          "name": "Lien",
+          "description": "URL d'écoute BirdNET."
+        },
+        "entry_id": {
+          "name": "Instance",
+          "description": "Instance BirdNET concernée."
+        }
       }
     }
   }

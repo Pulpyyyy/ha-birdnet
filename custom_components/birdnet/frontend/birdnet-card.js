@@ -4,7 +4,7 @@
  * any template sensor exposing common_name / image / bird_events.
  */
 
-const CARD_VERSION = "1.0.1";
+const CARD_VERSION = "1.1.0";
 
 console.info(`%c 🙂 BirdNET Card %c v${CARD_VERSION} %c`, "background:#2196F3;color:white;padding:2px 8px;border-radius:3px 0 0 3px;font-weight:bold", "background:#4CAF50;color:white;padding:2px 8px;border-radius:0 3px 3px 0", "background:none");
 

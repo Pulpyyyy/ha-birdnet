@@ -7,17 +7,20 @@
         "data": {
           "topic": "MQTT-Topic",
           "min_confidence": "Mindestzuverlässigkeit",
-          "excluded_species": "Ignorierte Arten"
+          "excluded_species": "Ignorierte Arten",
+          "base_url": "BirdNET-URL"
         },
         "data_description": {
           "topic": "Zum Beispiel birdnet/detection",
           "min_confidence": "Erkennungen unterhalb dieser Schwelle werden verworfen.",
-          "excluded_species": "Gebräuchlicher oder wissenschaftlicher Name, einer pro Eintrag (z. B. Mensch, Rauschen)."
+          "excluded_species": "Gebräuchlicher oder wissenschaftlicher Name, einer pro Eintrag (z. B. Mensch, Rauschen).",
+          "base_url": "Nur für BirdNET-Go, das keine Adresse veröffentlicht: aktiviert die Wiedergabe, z. B. http://192.168.1.10:8080. Für BirdNET-Pi leer lassen."
         }
       }
     },
     "error": {
-      "invalid_topic": "Ungültiges MQTT-Topic."
+      "invalid_topic": "Ungültiges MQTT-Topic.",
+      "invalid_url": "Ungültige URL, sie muss mit http:// oder https:// beginnen"
     },
     "abort": {
       "already_configured": "Dieses Topic ist bereits konfiguriert."
@@ -31,32 +34,53 @@
           "topic": "MQTT-Topic",
           "min_confidence": "Mindestzuverlässigkeit",
           "excluded_species": "Ignorierte Arten",
-          "max_detections": "Pro Tag gespeicherte Erkennungen"
+          "max_detections": "Pro Tag gespeicherte Erkennungen",
+          "base_url": "BirdNET-URL"
+        },
+        "data_description": {
+          "base_url": "Nur für BirdNET-Go, das keine Adresse veröffentlicht: aktiviert die Wiedergabe, z. B. http://192.168.1.10:8080. Für BirdNET-Pi leer lassen."
         }
       }
     },
     "error": {
-      "invalid_topic": "Ungültiges MQTT-Topic."
+      "invalid_topic": "Ungültiges MQTT-Topic.",
+      "invalid_url": "Ungültige URL, sie muss mit http:// oder https:// beginnen"
     }
   },
   "entity": {
     "sensor": {
-      "last_detection": { "name": "Letzte Erkennung" },
-      "confidence": { "name": "Zuverlässigkeit" },
-      "last_detection_time": { "name": "Erkennungszeit" },
-      "detections_today": { "name": "Erkennungen heute" },
-      "species_today": { "name": "Arten heute" },
-      "mqtt_topic": { "name": "MQTT-Topic" }
+      "last_detection": {
+        "name": "Letzte Erkennung"
+      },
+      "confidence": {
+        "name": "Zuverlässigkeit"
+      },
+      "last_detection_time": {
+        "name": "Erkennungszeit"
+      },
+      "detections_today": {
+        "name": "Erkennungen heute"
+      },
+      "species_today": {
+        "name": "Arten heute"
+      },
+      "mqtt_topic": {
+        "name": "MQTT-Topic"
+      }
     },
     "image": {
-      "last_detection": { "name": "Letzte Erkennung" }
+      "last_detection": {
+        "name": "Letzte Erkennung"
+      }
     },
     "event": {
       "detection": {
         "name": "Erkennung",
         "state_attributes": {
           "event_type": {
-            "state": { "detection": "Erkennung" }
+            "state": {
+              "detection": "Erkennung"
+            }
           }
         }
       }
@@ -77,12 +101,30 @@
       "name": "Erkennung simulieren",
       "description": "Fügt eine Testerkennung ein, nützlich zum Prüfen der Karte.",
       "fields": {
-        "common_name": { "name": "Gebräuchlicher Name", "description": "z. B. Elster" },
-        "scientific_name": { "name": "Wissenschaftlicher Name", "description": "z. B. Pica pica" },
-        "confidence": { "name": "Zuverlässigkeit", "description": "Zwischen 0 und 1." },
-        "image": { "name": "Bild", "description": "URL des Fotos." },
-        "link": { "name": "Link", "description": "BirdNET-Wiedergabelink." },
-        "entry_id": { "name": "Instanz", "description": "Betroffene BirdNET-Instanz." }
+        "common_name": {
+          "name": "Gebräuchlicher Name",
+          "description": "z. B. Elster"
+        },
+        "scientific_name": {
+          "name": "Wissenschaftlicher Name",
+          "description": "z. B. Pica pica"
+        },
+        "confidence": {
+          "name": "Zuverlässigkeit",
+          "description": "Zwischen 0 und 1."
+        },
+        "image": {
+          "name": "Bild",
+          "description": "URL des Fotos."
+        },
+        "link": {
+          "name": "Link",
+          "description": "BirdNET-Wiedergabelink."
+        },
+        "entry_id": {
+          "name": "Instanz",
+          "description": "Betroffene BirdNET-Instanz."
+        }
       }
     }
   }

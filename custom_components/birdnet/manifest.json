@@ -18,5 +18,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Pulpyyyy/ha-birdnet/issues",
   "requirements": [],
-  "version": "1.0.1"
+  "version": "1.1.0"
 }

@@ -38,7 +38,11 @@ _ALIASES: dict[str, tuple[str, ...]] = {
     "audio": ("audiourl", "audio", "clipname", "mp3"),
     "date": ("date",),
     "time": ("time",),
-    "timestamp": ("timestamp", "datetime", "begintime"),
+    # "begintime" is deliberately absent: BirdNET-Go publishes it as the start
+    # of the analysis window, up to 20 seconds before the detection itself. Its
+    # own API reports Date + Time as the detection timestamp.
+    "timestamp": ("timestamp", "datetime"),
+    "detection_id": ("detectionid",),
     "latitude": ("latitude", "lat"),
     "longitude": ("longitude", "lon", "lng"),
     "species_code": ("speciescode", "code"),
@@ -166,6 +170,8 @@ class Detection:
     longitude: float | None = None
     species_code: str | None = None
     source: str | None = None
+    # BirdNET-Go only: database id, the key to its audio API.
+    detection_id: str | None = None
     detected_at: datetime = field(default_factory=dt_util.now)
 
     @classmethod
@@ -196,6 +202,9 @@ class Detection:
                 str(code) if (code := _pick(payload, "species_code")) else None
             ),
             source=str(src) if (src := _pick(payload, "source")) else None,
+            detection_id=(
+                str(ident) if (ident := _pick(payload, "detection_id")) else None
+            ),
             detected_at=detected_at,
         )
 
@@ -221,6 +230,7 @@ class Detection:
             "link": self.link,
             "audio": self.audio_url,
             "species_code": self.species_code,
+            "detection_id": self.detection_id,
         }
 
     def to_store(self) -> dict[str, Any]:
@@ -236,6 +246,7 @@ class Detection:
             "longitude": self.longitude,
             "species_code": self.species_code,
             "source": self.source,
+            "detection_id": self.detection_id,
             "detected_at": self.detected_at.isoformat(),
         }
 
@@ -257,6 +268,7 @@ class Detection:
                 longitude=data.get("longitude"),
                 species_code=data.get("species_code"),
                 source=data.get("source"),
+                detection_id=data.get("detection_id"),
                 detected_at=dt_util.as_local(detected_at),
             )
         except (KeyError, TypeError, ValueError):

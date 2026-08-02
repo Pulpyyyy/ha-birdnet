@@ -7,17 +7,20 @@
         "data": {
           "topic": "MQTT topic",
           "min_confidence": "Minimum confidence",
-          "excluded_species": "Ignored species"
+          "excluded_species": "Ignored species",
+          "base_url": "BirdNET URL"
         },
         "data_description": {
           "topic": "For example birdnet/detection",
           "min_confidence": "Detections below this threshold are discarded.",
-          "excluded_species": "Common or scientific name, one per entry (e.g. Human, Noise)."
+          "excluded_species": "Common or scientific name, one per entry (e.g. Human, Noise).",
+          "base_url": "Only for BirdNET-Go, which publishes no address: enables playback, e.g. http://192.168.1.10:8080. Leave empty for BirdNET-Pi."
         }
       }
     },
     "error": {
-      "invalid_topic": "Invalid MQTT topic."
+      "invalid_topic": "Invalid MQTT topic.",
+      "invalid_url": "Invalid URL, it must start with http:// or https://"
     },
     "abort": {
       "already_configured": "This topic is already configured."
@@ -31,32 +34,53 @@
           "topic": "MQTT topic",
           "min_confidence": "Minimum confidence",
           "excluded_species": "Ignored species",
-          "max_detections": "Detections kept per day"
+          "max_detections": "Detections kept per day",
+          "base_url": "BirdNET URL"
+        },
+        "data_description": {
+          "base_url": "Only for BirdNET-Go, which publishes no address: enables playback, e.g. http://192.168.1.10:8080. Leave empty for BirdNET-Pi."
         }
       }
     },
     "error": {
-      "invalid_topic": "Invalid MQTT topic."
+      "invalid_topic": "Invalid MQTT topic.",
+      "invalid_url": "Invalid URL, it must start with http:// or https://"
     }
   },
   "entity": {
     "sensor": {
-      "last_detection": { "name": "Last detection" },
-      "confidence": { "name": "Confidence" },
-      "last_detection_time": { "name": "Detection time" },
-      "detections_today": { "name": "Detections today" },
-      "species_today": { "name": "Species today" },
-      "mqtt_topic": { "name": "MQTT topic" }
+      "last_detection": {
+        "name": "Last detection"
+      },
+      "confidence": {
+        "name": "Confidence"
+      },
+      "last_detection_time": {
+        "name": "Detection time"
+      },
+      "detections_today": {
+        "name": "Detections today"
+      },
+      "species_today": {
+        "name": "Species today"
+      },
+      "mqtt_topic": {
+        "name": "MQTT topic"
+      }
     },
     "image": {
-      "last_detection": { "name": "Last detection" }
+      "last_detection": {
+        "name": "Last detection"
+      }
     },
     "event": {
       "detection": {
         "name": "Detection",
         "state_attributes": {
           "event_type": {
-            "state": { "detection": "Detection" }
+            "state": {
+              "detection": "Detection"
+            }
           }
         }
       }
@@ -77,12 +101,30 @@
       "name": "Simulate a detection",
       "description": "Injects a fake detection, useful to test the card.",
       "fields": {
-        "common_name": { "name": "Common name", "description": "E.g. Eurasian Magpie" },
-        "scientific_name": { "name": "Scientific name", "description": "E.g. Pica pica" },
-        "confidence": { "name": "Confidence", "description": "Between 0 and 1." },
-        "image": { "name": "Image", "description": "Picture URL." },
-        "link": { "name": "Link", "description": "BirdNET listen URL." },
-        "entry_id": { "name": "Instance", "description": "BirdNET instance to target." }
+        "common_name": {
+          "name": "Common name",
+          "description": "E.g. Eurasian Magpie"
+        },
+        "scientific_name": {
+          "name": "Scientific name",
+          "description": "E.g. Pica pica"
+        },
+        "confidence": {
+          "name": "Confidence",
+          "description": "Between 0 and 1."
+        },
+        "image": {
+          "name": "Image",
+          "description": "Picture URL."
+        },
+        "link": {
+          "name": "Link",
+          "description": "BirdNET listen URL."
+        },
+        "entry_id": {
+          "name": "Instance",
+          "description": "BirdNET instance to target."
+        }
       }
     }
   }

@@ -16,6 +16,7 @@ from homeassistant.helpers import selector
 import voluptuous as vol
 
 from .const import (
+    CONF_BASE_URL,
     CONF_CLIP_SECRET,
     CONF_EXCLUDED_SPECIES,
     CONF_MAX_DETECTIONS,
@@ -36,6 +37,21 @@ _CONFIDENCE_SELECTOR = selector.NumberSelector(
 _SPECIES_SELECTOR = selector.SelectSelector(
     selector.SelectSelectorConfig(options=[], multiple=True, custom_value=True)
 )
+
+
+_URL_SELECTOR = selector.TextSelector(
+    selector.TextSelectorConfig(type=selector.TextSelectorType.URL)
+)
+
+
+def _validate_base_url(url: str) -> str | None:
+    """Return an error code when the instance URL is unusable."""
+    url = url.strip()
+    if not url:
+        return None
+    if not url.startswith(("http://", "https://")):
+        return "invalid_url"
+    return None
 
 
 def _validate_topic(topic: str) -> str | None:
@@ -61,8 +77,11 @@ class BirdNetConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             topic = user_input[CONF_TOPIC].strip()
+            base_url = user_input.get(CONF_BASE_URL, "").strip().rstrip("/")
             if error := _validate_topic(topic):
                 errors[CONF_TOPIC] = error
+            elif error := _validate_base_url(base_url):
+                errors[CONF_BASE_URL] = error
             else:
                 await self.async_set_unique_id(topic)
                 self._abort_if_unique_id_configured()
@@ -79,6 +98,7 @@ class BirdNetConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_EXCLUDED_SPECIES: user_input.get(
                             CONF_EXCLUDED_SPECIES, []
                         ),
+                        CONF_BASE_URL: base_url,
                         CONF_MAX_DETECTIONS: DEFAULT_MAX_DETECTIONS,
                     },
                 )
@@ -97,6 +117,7 @@ class BirdNetConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Optional(
                         CONF_EXCLUDED_SPECIES, default=[]
                     ): _SPECIES_SELECTOR,
+                    vol.Optional(CONF_BASE_URL, default=""): _URL_SELECTOR,
                 }
             ),
             errors=errors,
@@ -121,11 +142,14 @@ class BirdNetOptionsFlow(OptionsFlow):
 
         if user_input is not None:
             topic = user_input[CONF_TOPIC].strip()
+            base_url = user_input.get(CONF_BASE_URL, "").strip().rstrip("/")
             if error := _validate_topic(topic):
                 errors[CONF_TOPIC] = error
+            elif error := _validate_base_url(base_url):
+                errors[CONF_BASE_URL] = error
             else:
                 return self.async_create_entry(
-                    data={**user_input, CONF_TOPIC: topic}
+                    data={**user_input, CONF_TOPIC: topic, CONF_BASE_URL: base_url}
                 )
 
         return self.async_show_form(
@@ -146,6 +170,9 @@ class BirdNetOptionsFlow(OptionsFlow):
                         CONF_EXCLUDED_SPECIES,
                         default=list(options.get(CONF_EXCLUDED_SPECIES, [])),
                     ): _SPECIES_SELECTOR,
+                    vol.Optional(
+                        CONF_BASE_URL, default=options.get(CONF_BASE_URL, "")
+                    ): _URL_SELECTOR,
                     vol.Required(
                         CONF_MAX_DETECTIONS,
                         default=options.get(

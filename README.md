@@ -84,6 +84,7 @@ When adding the integration:
 | MQTT topic | `birdnet/detection` | The topic BirdNET publishes to |
 | Minimum confidence | 70 % | Anything below is discarded |
 | Ignored species | — | Common or scientific name (e.g. `Human`, `Noise`) |
+| BirdNET URL | — | **BirdNET-Go only**, e.g. `http://192.168.1.10:8080`. Leave empty for BirdNET-Pi |
 
 All of it can be changed later through *Configure*, along with the number of
 detections kept per day (500 by default).
@@ -126,9 +127,38 @@ body):
 }
 ```
 
-When the link carries a `?filename=xxx.mp3` query, the BirdNET-Pi audio clip URL
-is rebuilt (`/By_Date/<date>/<Species>/<file>`) and exposed as the `audio`
-attribute — the card then shows a play button.
+### BirdNET-Go specifics
+
+Its default topic is `birdnet`, but it follows whatever you set — commonly
+`birdnet/detections`. If you are unsure, BirdNET-Go publishes Home Assistant
+discovery messages that name it: look for the `state_topic` in
+`homeassistant/sensor/<node>/<...>/config` on your broker.
+
+It also **publishes below its own threshold**: a detection announced at 61 %
+still lands on MQTT even when BirdNET-Go is set to 70 %. The *Minimum
+confidence* option is what keeps those out.
+
+Its species pictures come from avicommons in 320 × 240, so the default 16:9
+frame crops a quarter of the height. Set `aspect_ratio: "4:3"` on the card to
+match the source and lose nothing.
+
+### Where the clip comes from
+
+The two flavours are handled by the same code, they simply publish different
+things.
+
+**BirdNET-Pi** announces its own address in the listen link. When that link
+carries a `?filename=xxx.mp3` query, the clip URL is rebuilt
+(`/By_Date/<date>/<Species>/<file>`). Nothing to configure.
+
+**BirdNET-Go** publishes no address at all — neither in the detection nor in its
+Home Assistant discovery messages. It does publish a `detectionId`, and its API
+serves the clip at `/api/v2/audio/<id>`. So playback needs the *BirdNET URL*
+setting; without it everything else still works, only the play button is
+missing.
+
+Either way the result lands in the `audio` attribute and the card shows a play
+button.
 
 ### Audio clips are relayed by Home Assistant
 
@@ -209,7 +239,7 @@ log_min_confidence: 70       # display threshold for the log
 max_rows: 10                 # log rows
 emphasis: confidence         # confidence | count: what the log highlights
 sort: auto                   # auto | time | count | confidence: log order
-wikipedia: true              # species names link to Wikipedia
+wikipedia: true              # Wikipedia as a fallback link, see below
 wikipedia_language: en       # defaults to the user's language
 tap_action: url              # url | wikipedia | more-info | none
 ```
@@ -231,7 +261,12 @@ detections, the gauge is relative to the most heard species, and the confidence
 steps back to the quiet slot.
 
 `tap_action: url` opens the BirdNET link from the MQTT message, falling back to
-Wikipedia when it is missing; `wikipedia` always goes to Wikipedia.
+Wikipedia when it is missing; `tap_action: wikipedia` always goes to Wikipedia.
+
+In the log, a species name links to its own detection on BirdNET, so a click
+takes you to that recording. Wikipedia is used when no such link exists, which
+is the case with BirdNET-Go. Set `wikipedia: false` to drop that fallback and
+leave the names as plain text.
 
 ### Design notes
 
