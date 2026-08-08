@@ -46,10 +46,14 @@ database.
 
 ### HACS (recommended)
 
-1. HACS → Integrations → ⋮ menu → *Custom repositories*
-2. Repository URL, category **Integration**
-3. Install *BirdNET*, then restart Home Assistant
-4. Settings → Devices & services → *Add integration* → **BirdNET**
+[![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Pulpyyyy&repository=ha-birdnet&category=integration)
+
+The button adds the repository to HACS and opens it. Install *BirdNET*, restart
+Home Assistant, then go to Settings → Devices & services → *Add integration* →
+**BirdNET**.
+
+Adding it by hand works too: HACS → Integrations → ⋮ menu → *Custom
+repositories*, this repository's URL, category **Integration**.
 
 ### Manual
 
